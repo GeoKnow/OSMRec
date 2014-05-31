@@ -1,0 +1,6 @@
+model files: 
+these files are created by training an svm model given an input file.
+If no conf parameter "-c" is given from user, 
+several test models are produced and the program chooses the optimal model and conf parameter for the recommendation phase.
+
+

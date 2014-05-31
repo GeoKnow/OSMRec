@@ -1,0 +1,8 @@
+model files: 
+these files are created by training an svm model given an input file.
+If no conf parameter "-c" is given from user, 
+several test models are produced and the program chooses the optimal model and conf parameter for the recommendation phase.
+
+.mat.kclusters files:
+these files are the output of the clustering process. The .kClusters is the number of clusters produced based on the average instance per cluster
+provided by the user with -k parameter.

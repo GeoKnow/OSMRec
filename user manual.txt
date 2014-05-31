@@ -1,0 +1,213 @@
+---------------------------------------------------------------------------------------------------------------------------
+
+                                       How to run the program 
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+1. Open command line and go to the target directory of the project
+
+
+2. Paste an osm file into the target directory in order to provide only the name of the file in the command line arguments.
+   Otherwise you must define the complete path of the file and it should start with "/" or "file:///".
+
+
+3. Train a model using this file. This is the first thing you should do when using the program for the first time.
+   There are two training options: SVM training on spatial entities as items and clustering of spatial entities 
+   and k-NN algorithm on clusters of entities.
+   
+
+
+Examples for the training process:
+
+	
+
+	1)
+ java -jar OSMRec-1.0.jar -train 1 -c 200.0 -i inputfile
+
+	
+
+	This option chooses the SVM training with c parameter set to 100. You can try several values for the c parameter
+ 
+	and decide after the testing phase which is the most suitable. If you choose not to provide a c parameter,
+ 
+	the program runs several configurations and decides based on the classification error, the optimal c parameter.
+ 
+	However this selection may take a lot of time depending on the size of the file.
+
+
+
+	2)
+	java -jar OSMRec-1.0.jar -train 2 -k 100 -i inputfile
+
+
+
+	This option executes the clustering process and the k parameter specifies the desired average instances per cluster.
+ 
+	If you choose not to define a k parameter, the program runs several configurations and scores them in order to select
+ 
+	the most suitable value for k. This selection may also take a lot of time depending on the filesize.
+
+
+
+
+4. After the training process is finished the program has produced some files for the testing phase. 
+   
+
+You can test new instances using another osm file, usually of a much smaller size. 
+   
+Depending on the training method used you can test the new instances as follows:
+
+
+
+	1)
+ java -jar OSMRec-1.0.jar -test 1 -i inputfile -o output.txt
+
+	
+
+	This execution produces an output file containing the node IDs of the osm file followed by the recommended classes for each one.
+ 
+	The recommended classes are up to 5.
+
+
+
+
+	2)
+	java -jar OSMRec-1.0.jar -test 2 -i inputfile -o output.txt
+
+	
+
+
+All the produced files including the output file with the class recommendations 
+are stored inside target/classes/output directory for convenience. 
+
+
+	When training without defining the c parameter for the training process, several models are produced and reside in the output directory. 
+
+	The recommended model from this procedure is suggested at the terminal output, however you can choose any of the produced models.
+
+
+
+
+------------------------------------------------------
+                  
+			IO Files
+
+------------------------------------------------------
+
+
+
+
+
+mappings directory:
+
+
+
+	averageClusterVectors: this file is a serialization of the average vectors for each cluster produced by clustering of spatial entities.
+
+	
+
+	Map: keeps information about the mapping of the osm tags with the ontology classes
+
+
+
+	names: frequent names of osm entities. The textual features are constructed using these name occurences.
+
+
+
+	owl.xml: file containing the ontology of the osm class hierarchy.
+
+
+
+output directory:
+
+
+
+	modelXX: These files contain information about the model produced from the SVM training. They are used for the testing phase.
+
+		 The user can define an optional parameter defining a different model.
+
+
+
+	vectors: This file contains the vectors of each osm entity and is used as input for the SVM training process.
+
+	
+
+	testSVM: This file contains the output of the SVM testing process. It is used to compute recommendations of new osm instances.
+
+	
+
+	vmatrix.mat: Contains vectors for each osm instance with balanced features 
+based on different weights for each feature type (class, geometry, textual).
+ 
+		     The file is used for input in the clustering process.
+
+	
+
+	vmatrix.mat.KClusters: 	File containing the produced clustering solution of the training process. 
+
+				"Kclusters" is the desired clusters produced based on the average instances per cluster provided by the user.
+
+				Each line represents an osm entity followed by the cluster ID that belongs. 
+
+				"-1" cluster ID indicates that the instance could not be clustered in any of the computed clusters.
+
+	
+output.txt: Default file for the class recommendations of each instance of the input file. 
+		    The file contains the osm entity ID followed by the recommended classes.
+
+		    The user can choose a different name for this file by defining -o parameter.
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+Usage: 
+java -jar OSMRec-1.0.jar -train trainAlgorithm -i inputFile [-c confParameter] [-k averageSize] [-m model]
+ 
+or
+
+java -jar OSMRec-1.0.jar -test trainAlgorithm -i inputFile [-m model] [-o outputFile]
+
+
+Train algorithm takes values 1,2 or 3: [-train algorithm] 
+
+1    SVM training on spatial entities as items
+
+2    Clustering of spatial entities and k-NN algorithm on clusters of entities
+
+-i requires a filename: [-i inputFile]
+
+-c requires a number parameter: [-c confParameter]
+
+-k requires the desired average number of items per cluster: [-k averageSize]
+
+-m requires a filename for the model: [-m model]
+
+
+
+
+
+---------------------------
+
+      Requirements
+
+---------------------------
+
+
+The program requires 64-bit Linux and disk/RAM requirements depends on the size of the input osm files.
+
+
+
