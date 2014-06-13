@@ -16,12 +16,21 @@ import org.apache.commons.exec.DefaultExecutor;
 
 public class TrainSVM {
     
-    public void executeTrain(String path, double confParameter, String model){
+    public void executeTrain(String path, double confParameter, String model, boolean isLinux){
 
-            String trainLine = path + "/src/main/resources/svm_multiclass_learn "
-                + "-c " + confParameter + " "
-                + path + "/target/classes/output/vectors "     
-                + path + "/target/classes/output/" + model;               
+        String trainLine;
+        if(isLinux){
+            trainLine = path + "/src/main/resources/svm_multiclass_learn "
+            + "-c " + confParameter + " "
+            + path + "/target/classes/output/vectors "     
+            + path + "/target/classes/output/" + model; 
+        }
+        else{
+            trainLine = path + "/src/main/resources/svm_multiclass_learn.exe "
+            + "-c " + confParameter + " "
+            + path + "/target/classes/output/vectors "     
+            + path + "/target/classes/output/" + model;
+        }              
   
         CommandLine commandLine = CommandLine.parse(trainLine);
         DefaultExecutor executor = new DefaultExecutor();

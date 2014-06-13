@@ -15,13 +15,22 @@ import org.apache.commons.exec.DefaultExecutor;
 
 public class VClustering {
     
-    public void executeClusteringProcess(String path, int clusters){
+    public void executeClusteringProcess(String path, int clusters, boolean isLinux){
         System.out.println("Executing clustering process...");
-        String clusteringCommand = path + "/src/main/resources/vcluster " 
-                + "-clmethod=graph -sim=dist -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." + clusters + " " 
-                + path + "/target/classes/output/vmatrix.mat "
-                + clusters; //number of desired clusters based on the average instance per cluster. 
-
+        String clusteringCommand;
+        if(isLinux){
+            clusteringCommand = path + "/src/main/resources/vcluster " 
+            + "-clmethod=graph -sim=dist -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." + clusters + " " 
+            + path + "/target/classes/output/vmatrix.mat "
+            + clusters; //number of desired clusters based on the average instance per cluster. 
+        }
+        else{
+            clusteringCommand = path + "/src/main/resources/vcluster.exe " 
+            + "-clmethod=graph -sim=dist -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." + clusters + " " 
+            + path + "/target/classes/output/vmatrix.mat "
+            + clusters; //number of desired clusters based on the average instance per cluster.
+        }
+        
         CommandLine commandLineClustering = CommandLine.parse(clusteringCommand);
         DefaultExecutor classificationExecutor = new DefaultExecutor();
         classificationExecutor.setExitValue(0);

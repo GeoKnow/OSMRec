@@ -22,6 +22,8 @@ import java.util.TreeMap;
 
 public class SVMRecommender {    
     
+    private static final String SEP = System.lineSeparator();
+    
     public void recommend(String recommendationsFile, File svmPredictionsOutputFile, File testFile, Map<String,Integer> mappingsWithIDs, List<OSMWay> wayList, String path){
         
         Map<Integer,String> reverseMappings = new HashMap();
@@ -55,7 +57,7 @@ public class SVMRecommender {
                     sortedMapOfClassValues.putAll(classesWithIDs);
                     
                     int k =0;
-                    bufferedWriter.write("\nNode ID: " + wayList.get(instance).getID());
+                    bufferedWriter.write(SEP +"Node ID: " + wayList.get(instance).getID());
                     bufferedWriter.newLine();
                     for (Double key : sortedMapOfClassValues.descendingKeySet()){
                         

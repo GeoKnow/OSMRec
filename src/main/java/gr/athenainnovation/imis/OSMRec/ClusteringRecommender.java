@@ -25,6 +25,7 @@ import java.util.Set;
 
 public class ClusteringRecommender {
     
+    private static final String SEP = System.lineSeparator();
     private final List<OSMWay> wayList;
     private final ArrayList<Cluster> averageVectors;
     private final Map<String, Integer> mappingsWithIDs;
@@ -53,7 +54,7 @@ public class ClusteringRecommender {
                 reverseMappings.put(map.getValue(), map.getKey());
             }
             
-            System.out.print("computing recommendations...");
+            System.out.println("computing recommendations...");
             for (OSMWay node : wayList){
                 
                 ArrayList<Integer> nodeVector = node.getVector();
@@ -82,11 +83,14 @@ public class ClusteringRecommender {
                       } 
                 }
 
-                List<DistinctiveClasses> computedClasses = bestClusterForInstance.getSortedClusterClasses();
+                List<DistinctiveClasses> computedClasses = new ArrayList<>();
+                if(bestClusterForInstance != null){
+                    computedClasses = bestClusterForInstance.getSortedClusterClasses();
+                }
                 Set<Integer> actualClassList = node.getClassIDs();
                 actualClassList.add(node.getClassID());
 
-                bufferedWriter.write("\nNode ID: " + node.getID());
+                bufferedWriter.write(SEP + "Node ID: " + node.getID());
                 bufferedWriter.newLine();
 
                 int i =0;               
@@ -101,15 +105,15 @@ public class ClusteringRecommender {
                 }
                 
                 if(computedClasses.isEmpty()){
-                    bufferedWriter.write("Clustering process could not produce a good clustering solution to classify this instance. \n"
-                                            + "You could try again by changing the -k parameter in train mode.");
+                    bufferedWriter.write("Clustering process could not produce a good clustering solution to classify this instance. "+ SEP
+                                            + "You could try again by changing the -k parameter in train mode."+ SEP);
                 }
                 else{
                     if(recommendationClasses.isEmpty()){
-                        bufferedWriter.write("Could not recommend a suitable class for this instance.\n");
+                        bufferedWriter.write("Could not recommend a suitable class for this instance." + SEP);
                     }
                     else{
-                        //write recomendation classes list iunder this instance
+                        //write recomendation classes list under this instance
                         String temp = recommendationClasses.toString();
                         String text = temp.substring(1, temp.length()-1);
 
@@ -119,6 +123,7 @@ public class ClusteringRecommender {
                 } 
             }
             bufferedWriter.close();
+       System.out.println("Recommendations computed! Check the output.txt in the target/classes directory" + SEP);
        }
        catch(IOException ex){
            System.out.println("Something went wrong computing the recommendations.. Please try again.");
@@ -133,8 +138,6 @@ public class ClusteringRecommender {
 
         for (int i = 0; i < vectorA.size(); i++) {
             dotProduct += vectorA.get(i)*vectorB.get(i);
-    //          normA += Math.pow(vectorA.get(i), 2);
-    //          normB += Math.pow(vectorB.get(i), 2);
             normA += vectorA.get(i)*vectorA.get(i);
             normB += vectorB.get(i)*vectorB.get(i);
         }  

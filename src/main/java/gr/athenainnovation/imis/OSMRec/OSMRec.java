@@ -48,6 +48,7 @@ import java.util.logging.Logger;
 
 public class OSMRec {   
     
+    private static String OS = System.getProperty("os.name").toLowerCase();
     private static Map<String,String> mappings;
     private static Map<String,Integer> mappingsWithIDs;
     private static Map<String, List<String>> indirectClasses;
@@ -86,6 +87,18 @@ public class OSMRec {
        int averageInstancesPerCluster = -1; //default: no k parameter specified
        boolean wrongArguments = false;
        //matrixFilePath = path + "/classes/output/matrix.graph";   //adjacency matrix
+       boolean isLinux = false;
+       
+       if(OS.indexOf("nux") >= 0){
+           isLinux = true;
+       }
+       else if(OS.indexOf("win") >= 0){
+           isLinux = false;
+       }
+       else{
+           System.out.println("Your operating system is not supported yet :/");
+           System.exit(0);
+       }
        
        while (i < args.length){
 
@@ -242,7 +255,7 @@ public class OSMRec {
         namesList = nameOccurrencesParser.getNamesList();
         
         String osmInputPath;
-        if (osmFile.startsWith("/") || osmFile.startsWith("file:///")){
+        if (osmFile.startsWith("/") || osmFile.startsWith("file:///")){  //system has already exited in case of a null osmFile
 
              osmInputPath = osmFile;
         }
@@ -287,22 +300,38 @@ public class OSMRec {
 
         
         if(confParameter == null && trainMode && trainAlgorithm == 1){ 
-            chooseOptimalConfParameter(model, testSvmOutputFile); //if conf parameter is not set, find best conf param 
+            chooseOptimalConfParameter(model, testSvmOutputFile, isLinux); //if conf parameter is not set, find best conf param 
             
         }
         else{ 
             //-train 1: training the model using SVM multiclass
             if(trainMode && trainAlgorithm == 1){
-                String makePath = path.replace("/target", "");
+                
+                String makePath;
+                if(isLinux){
+                    makePath = path.replace("/target", "");
+                }
+                else{
+                    makePath = path.replace("\\target","");    
+                }
+                
                 TrainSVM trainSVM = new TrainSVM();
-                trainSVM.executeTrain(makePath, confParameter, model);
+                trainSVM.executeTrain(makePath, confParameter, model, isLinux);
             }
 
             //-test 1: testing the input osm file, using the model produced from the training process.
             if(testMode && trainAlgorithm == 1){
-                String makePath = path.replace("/target", "");
+                
+                String makePath;
+                if(isLinux){
+                makePath = path.replace("/target", "");
+                }
+                else{
+                makePath = path.replace("\\target","");    
+                }
+                
                 TestSVM testSVM = new TestSVM(makePath, model, testSvmOutputFile);
-                testSVM.executeTest();
+                testSVM.executeTest(isLinux);
 
                 File vectorsOutputFile = new File(path + "/classes/output/vectors"); //this file contains the vectors produced from the test set       
                 File svmPredictionsOutputFile = new File(path + "/classes/output/" + testSvmOutputFile); //this file contains the predictions from svm classify
@@ -318,7 +347,7 @@ public class OSMRec {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         if(averageInstancesPerCluster == -1 && trainMode && trainAlgorithm == 2){
-            chooseOptimalNumberOfClusters();
+            chooseOptimalNumberOfClusters(isLinux);
         }
         else {           
         
@@ -329,9 +358,16 @@ public class OSMRec {
                 BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(wayList, vectorMatrixOutputFile);
                 balancedVectorsMatrix.generateBalancedVectorsMatrix();  
 
-                String makePath = path.replace("/target", "");
+                String makePath;
+                if(isLinux){
+                makePath = path.replace("/target", "");
+                }
+                else{
+                makePath = path.replace("\\target","");    
+                }
+                
                 VClustering vCluster = new VClustering();
-                vCluster.executeClusteringProcess(makePath, kClusters);
+                vCluster.executeClusteringProcess(makePath, kClusters, isLinux);
 
                 //train average cluster vectors and save them to a file. This file will be used to classify new osm instances in a cluster
                 String clusterSolution = path + "/classes/output/vmatrix.mat.clustering." + kClusters;
@@ -380,22 +416,29 @@ public class OSMRec {
         
     }//end of main
    
-    private static void chooseOptimalConfParameter(String model, String testSvmOutputFile){
-        //Double[] confParams = new Double[] {5.0, 30.0, 1000.0, 40000.0, 100000.0, 200000.0}; // custom values for choosing optimal c parameter
-        Double[] confParams = new Double[] {3.0, 7.0}; //debugging
+    private static void chooseOptimalConfParameter(String model, String testSvmOutputFile, boolean isLinux){
+        Double[] confParams = new Double[] {5.0, 30.0, 1000.0, 40000.0, 100000.0, 200000.0}; // custom values for choosing optimal c parameter
+        //Double[] confParams = new Double[] {3.0, 7.0}; //debugging
         int i =0;
         float bestScore = 100;
         String bestModel = model;
         double bestConfParam = 5.0;
-        String makePath = path.replace("/target", "");
+        
+        String makePath;
+        if(isLinux){
+        makePath = path.replace("/target", "");
+        }
+        else{
+        makePath = path.replace("\\target","");    
+        }
         
         for (Double confParam : confParams) {
                                   
             TrainSVM trainSVM = new TrainSVM();
-            trainSVM.executeTrain(makePath, confParam, model+i);
+            trainSVM.executeTrain(makePath, confParam, model+i, isLinux);
 
             TestSVM testSVM = new TestSVM(makePath, model+i, testSvmOutputFile);
-            testSVM.executeTest();             
+            testSVM.executeTest(isLinux);             
             
             float score = testSVM.getScore();
             if(score < bestScore){
@@ -407,14 +450,14 @@ public class OSMRec {
         }             
         
         TrainSVM trainSVM = new TrainSVM();
-        trainSVM.executeTrain(makePath, bestConfParam, bestModel);  //final training with optimal c parameter
+        trainSVM.executeTrain(makePath, bestConfParam, bestModel, isLinux);  //final training with optimal c parameter
         
         System.out.println("Best model produced is the file \"" + bestModel +"\", with conf parameter \"-c " + bestConfParam + "\"");
         System.out.println("Define this parameter to use the best model for SVM test: \"-m " + bestModel + "\"");
         
     }
     
-    private static void chooseOptimalNumberOfClusters(){
+    private static void chooseOptimalNumberOfClusters(boolean isLinux){
 
         float bestScore = 100; //worst possible score, because score represents classification error
         int optimalClusters = 70;
@@ -423,40 +466,48 @@ public class OSMRec {
         
         for(Integer k : averageInstances){       
             
-                String vectorMatrixOutputFile = path + "/classes/output/vmatrix";
-                BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(wayList, vectorMatrixOutputFile);
-                balancedVectorsMatrix.generateBalancedVectorsMatrix();  
-                String makePath = path.replace("/target", "");
-                VClustering vCluster = new VClustering();
-                vCluster.executeClusteringProcess(makePath, k);
+            String vectorMatrixOutputFile = path + "/classes/output/vmatrix";
+            BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(wayList, vectorMatrixOutputFile);
+            balancedVectorsMatrix.generateBalancedVectorsMatrix();  
 
-                //train average cluster vectors and save them to a file. This file will be used to classify new osm instances in a cluster
-                String clusterSolution = path + "/classes/output/vmatrix.mat.clustering." + k;
+            String makePath;
+            if(isLinux){
+            makePath = path.replace("/target", "");
+            }
+            else{
+            makePath = path.replace("\\target","");    
+            }             
 
-                ClusterVectors clusterVectors = new ClusterVectors(wayList, clusterSolution);
-                clusterVectors.produceClusterVectors();
-                
-                ArrayList<Cluster> trainedAverageVectors = clusterVectors.getAverageClusterVectors(); //avoiding serialization here                  
-                ClusteringScorer cs = new ClusteringScorer(wayList, trainedAverageVectors, mappingsWithIDs);    
-                cs.score();
-                
-                float score = cs.getScore();               
-                if(score < bestScore){ //the score represents the classification error
-                    bestScore = score;
-                    optimalClusters = k;
-                }
-                
-                //serialize average vectors with the best k parameter
-                try (FileOutputStream fileOut = new FileOutputStream(path + "/classes/mappings/averageClusterVectors.ser"); 
-                    ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-                    out.writeObject(trainedAverageVectors);
+            VClustering vCluster = new VClustering();
+            vCluster.executeClusteringProcess(makePath, k, isLinux);
 
-                }
-                catch(IOException e){
-                    System.out.println("serialize " + e);
-                }
-                System.out.println("Best value for average instances per cluster is " + optimalClusters);
-                System.out.println("Try to test defining -k " + optimalClusters);
+            //train average cluster vectors and save them to a file. This file will be used to classify new osm instances in a cluster
+            String clusterSolution = path + "/classes/output/vmatrix.mat.clustering." + k;
+
+            ClusterVectors clusterVectors = new ClusterVectors(wayList, clusterSolution);
+            clusterVectors.produceClusterVectors();
+
+            ArrayList<Cluster> trainedAverageVectors = clusterVectors.getAverageClusterVectors(); //avoiding serialization here                  
+            ClusteringScorer cs = new ClusteringScorer(wayList, trainedAverageVectors, mappingsWithIDs);    
+            cs.score();
+
+            float score = cs.getScore();               
+            if(score < bestScore){ //the score represents the classification error
+                bestScore = score;
+                optimalClusters = k;
+            }
+
+            //serialize average vectors with the best k parameter
+            try (FileOutputStream fileOut = new FileOutputStream(path + "/classes/mappings/averageClusterVectors.ser"); 
+                ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+                out.writeObject(trainedAverageVectors);
+
+            }
+            catch(IOException e){
+                System.out.println("serialize " + e);
+            }
+            System.out.println("Best value for average instances per cluster is " + optimalClusters);
+            System.out.println("Try to test defining -k " + optimalClusters);
         }
         
     }

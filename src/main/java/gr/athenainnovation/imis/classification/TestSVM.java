@@ -30,16 +30,25 @@ public class TestSVM {
         this.output = output;
     }
     
-    public void executeTest(){      
+    public void executeTest(boolean isLinux){      
         
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         PrintStream printStream = new PrintStream(byteArray);
         PrintStream original = System.out;       
 
-        String classificationLine = path + "/src/main/resources/svm_multiclass_classify "
-        + path + "/target/classes/output/vectors "
-        + path + "/target/classes/output/" + model + " " 
-        + path + "/target/classes/output/"+ output;     
+        String classificationLine;
+        if(isLinux){
+            classificationLine = path + "/src/main/resources/svm_multiclass_classify "
+            + path + "/target/classes/output/vectors "
+            + path + "/target/classes/output/" + model + " " 
+            + path + "/target/classes/output/"+ output;     
+        }
+        else{
+            classificationLine = path + "/src/main/resources/svm_multiclass_classify.exe "
+            + path + "/target/classes/output/vectors "
+            + path + "/target/classes/output/" + model + " " 
+            + path + "/target/classes/output/"+ output;
+        }     
         
         System.setOut(printStream);           
         
