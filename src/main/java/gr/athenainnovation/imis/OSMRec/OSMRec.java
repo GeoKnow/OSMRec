@@ -12,7 +12,7 @@ import gr.athenainnovation.imis.classification.TrainSVM;
 import gr.athenainnovation.imis.classification.TestSVM;
 import gr.athenainnovation.imis.OSMContainer.OSMNode;
 import gr.athenainnovation.imis.OSMContainer.OSMWay;
-import gr.athenainnovation.imis.ScoringMechanism.ClusteringScorer;
+import gr.athenainnovation.imis.scoring.ClusteringScorer;
 import gr.athenainnovation.imis.classification.VClustering;
 import gr.athenainnovation.imis.generator.Cluster;
 import gr.athenainnovation.imis.parsers.MappingsParser;
@@ -464,10 +464,22 @@ public class OSMRec {
         Integer[] averageInstances = new Integer[] {70, 65, 60, 55, 50, 45, 40, 35, 30, 25};
         //Integer[] averageInstances = new Integer[] {70, 50}; //debugging 
         
+        int trainSize = 3*wayList.size()/5;
+        int testSize = wayList.size()/5;
+        
+        List<OSMWay> trainList= new ArrayList<>();
+        for(int g = 0; g<trainSize; g++){                   
+            trainList.add(wayList.get(g));
+        }
+        List<OSMWay> testList= new ArrayList<>();
+        for(int g = 4*testSize; g<5*testSize; g++){
+            testList.add(wayList.get(g));
+        }
+        
         for(Integer k : averageInstances){       
             
             String vectorMatrixOutputFile = path + "/classes/output/vmatrix";
-            BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(wayList, vectorMatrixOutputFile);
+            BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(trainList, vectorMatrixOutputFile);
             balancedVectorsMatrix.generateBalancedVectorsMatrix();  
 
             String makePath;
@@ -479,22 +491,22 @@ public class OSMRec {
             }             
 
             VClustering vCluster = new VClustering();
-            vCluster.executeClusteringProcess(makePath, k, isLinux);
+            vCluster.executeClusteringProcess(makePath, (trainSize/k), isLinux);
 
             //train average cluster vectors and save them to a file. This file will be used to classify new osm instances in a cluster
-            String clusterSolution = path + "/classes/output/vmatrix.mat.clustering." + k;
+            String clusterSolution = path + "/classes/output/vmatrix.mat.clustering." + (trainSize/k);
 
-            ClusterVectors clusterVectors = new ClusterVectors(wayList, clusterSolution);
+            ClusterVectors clusterVectors = new ClusterVectors(trainList, clusterSolution);
             clusterVectors.produceClusterVectors();
 
             ArrayList<Cluster> trainedAverageVectors = clusterVectors.getAverageClusterVectors(); //avoiding serialization here                  
-            ClusteringScorer cs = new ClusteringScorer(wayList, trainedAverageVectors, mappingsWithIDs);    
+            ClusteringScorer cs = new ClusteringScorer(testList, trainedAverageVectors, mappingsWithIDs);    
             cs.score();
 
             float score = cs.getScore();               
             if(score < bestScore){ //the score represents the classification error
                 bestScore = score;
-                optimalClusters = k;
+                optimalClusters = (trainSize/k);
             }
 
             //serialize average vectors with the best k parameter
