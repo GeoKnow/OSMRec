@@ -516,12 +516,11 @@ public class OSMRec {
 
             }
             catch(IOException e){
-                System.out.println("serialize " + e);
+                System.out.println("serialize error:\n " + e);
             }
-            System.out.println("Best value for average instances per cluster is " + optimalClusters);
-            System.out.println("Try to test defining -k " + optimalClusters);
         }
-        
+    System.out.println("Best value for average instances per cluster is " + optimalClusters);
+    System.out.println("Try to test defining -k " + optimalClusters);
     }
     //////////////////////       for sclustering, takes too long to execute for large training files   //////////////////////        
  
