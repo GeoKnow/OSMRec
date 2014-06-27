@@ -3,6 +3,7 @@ package gr.athenainnovation.imis.classification;
 
 import gr.athenainnovation.imis.OSMRec.OSMRec;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.logging.Level;
@@ -35,15 +36,27 @@ public class TestSVM {
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         PrintStream printStream = new PrintStream(byteArray);
         PrintStream original = System.out;       
-
+        boolean isExecutable;
         String classificationLine;
         if(isLinux){
+            if(new File(path + "/src/main/resources/svm_multiclass_classify").canExecute()){
+                isExecutable = true;
+            }
+            else{
+                isExecutable = new File(path + "/src/main/resources/svm_multiclass_classify").setExecutable(true,false);
+            }
             classificationLine = path + "/src/main/resources/svm_multiclass_classify "
             + path + "/target/classes/output/vectors "
             + path + "/target/classes/output/" + model + " " 
             + path + "/target/classes/output/"+ output;     
         }
         else{
+            if(new File(path + "/src/main/resources/svm_multiclass_classify.exe").canExecute()){
+                isExecutable = true;
+            }
+            else{
+                isExecutable = new File(path + "/src/main/resources/svm_multiclass_classify.exe").setExecutable(true,false);
+            }
             classificationLine = path + "/src/main/resources/svm_multiclass_classify.exe "
             + path + "/target/classes/output/vectors "
             + path + "/target/classes/output/" + model + " " 
@@ -73,6 +86,14 @@ public class TestSVM {
             setScore(score);
             
         }
+        catch (IOException ex) {
+            if(!isExecutable){
+                System.out.println("OSMRec could not grant permission to execute the svm_multiclass process.\n "
+                        + "Please set src/main/resources/svm_multiclass_classify process execute permission and try again.");
+                System.exit(0);
+            }
+            Logger.getLogger(OSMRec.class.getName()).log(Level.SEVERE, null, ex);      
+        }
         catch(NumberFormatException e){
             
             String[] scoreContainer = svmTestOutput.split("\\n");
@@ -81,11 +102,7 @@ public class TestSVM {
             score = Float.parseFloat(scoreString);
             setScore(score);
             
-        }
-        catch (IOException ex) {
-            
-            Logger.getLogger(OSMRec.class.getName()).log(Level.SEVERE, null, ex);
-        } 
+        }       
     }
     
     private void setScore(float score){
