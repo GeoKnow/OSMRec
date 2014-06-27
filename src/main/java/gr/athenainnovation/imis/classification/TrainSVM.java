@@ -58,7 +58,7 @@ public class TrainSVM {
         } catch (IOException ex) {
             if(!isExecutable){
                 System.out.println("OSMRec could not grant permission to execute the svm_multiclass process.\n "
-                        + "Please set src/main/resources/svm_multiclass process execute permission and try again.");
+                        + "Please set src/main/resources/svm_multiclass_learn process execute permission and try again.");
                 System.exit(0);
             }
             
