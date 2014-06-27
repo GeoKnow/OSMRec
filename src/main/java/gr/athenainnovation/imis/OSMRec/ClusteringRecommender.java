@@ -68,11 +68,10 @@ public class ClusteringRecommender {
                     similarities.add(similarity);
 
                     //this map contains all average cluster vectors with the corresponding similarities with current instance
-                    clusterSimilarities.put(averageClusterVector, similarity); //cluster vector and similarity of the cluster vector and current instance vector
-                    Collections.sort(similarities, Collections.reverseOrder());
-
+                    clusterSimilarities.put(averageClusterVector, similarity); //cluster vector and similarity of the cluster vector and current instance vector                    
                 }
-
+                
+                Collections.sort(similarities, Collections.reverseOrder());
                 Cluster bestClusterForInstance = null;
                 for(Map.Entry<Cluster, Double> clusterSimilarity : clusterSimilarities.entrySet()){ 
 
