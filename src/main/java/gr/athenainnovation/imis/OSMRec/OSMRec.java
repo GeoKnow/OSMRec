@@ -48,7 +48,7 @@ import java.util.logging.Logger;
 
 public class OSMRec {   
     
-    private static String OS = System.getProperty("os.name").toLowerCase();
+    private static final String OS = System.getProperty("os.name").toLowerCase();
     private static Map<String,String> mappings;
     private static Map<String,Integer> mappingsWithIDs;
     private static Map<String, List<String>> indirectClasses;
@@ -87,7 +87,7 @@ public class OSMRec {
        int averageInstancesPerCluster = -1; //default: no k parameter specified
        boolean wrongArguments = false;
        //matrixFilePath = path + "/classes/output/matrix.graph";   //adjacency matrix
-       boolean isLinux = false;
+       boolean isLinux =false;
        
        if(OS.indexOf("nux") >= 0){
            isLinux = true;
