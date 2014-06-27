@@ -26,8 +26,8 @@ public class VClustering {
             }
             else{
                 isExecutable = new File(path + "/src/main/resources/vcluster").setExecutable(true,false);
-            }    
-            //new File(path + "/src/main/resources/vcluster").
+            }   
+            
             clusteringCommand = path + "/src/main/resources/vcluster " 
             + "-clmethod=graph -sim=dist -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." + clusters + " " 
             + path + "/target/classes/output/vmatrix.mat "
