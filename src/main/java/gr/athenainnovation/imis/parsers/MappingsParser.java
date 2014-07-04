@@ -27,29 +27,28 @@ public class MappingsParser {
         
     public void parseFile(File file) throws FileNotFoundException {
                  
-         Scanner input = new Scanner(file); //the Map file contains lines of the mappings separated with the symbol "|"
+        Scanner input = new Scanner(file); //the Map file contains lines of the mappings separated with the symbol "|"
                                             //e.g. highway motorway | Motorway
                                             //the key will be the string "highway motorway" and the value "Motorway"
-         while(input.hasNext()) {
+        while(input.hasNext()) {
           
              String nextLine = input.nextLine();
-             String[] splitContent = nextLine.split("\\|",2);   //split current line in two parts, separated by the "|" symbol
+             String[] splitContent = nextLine.split("\\|",2);   //split current line in two parts, 
+                                                                //separated by the "|" symbol
              String key = splitContent[0];                      //got the key which will be mapped at a class  
              String value = splitContent[1];                    //the value which is the mapped class
              key = key.trim();                                  
              value = value.trim();                              
              mappings.put(key, value);
-         }
-         //System.out.println("mappings size: " + mappings.size());  //debugging check
-         constructMappingsWithIDs();
+        }
+        constructMappingsWithIDs();
          
     LOG.info("Mappings file parsed successfully!");     
     } 
     
     private void constructMappingsWithIDs(){
         Integer i = 1;
-        for (String ontologyClass : mappings.values()){  
-            
+        for (String ontologyClass : mappings.values()){             
             mappingsWithIDs.put(ontologyClass, i);           
             i++;
         }       
@@ -61,6 +60,5 @@ public class MappingsParser {
     
     public HashMap getMappings(){
         return this.mappings;
-    }    
-    
+    }        
 }
