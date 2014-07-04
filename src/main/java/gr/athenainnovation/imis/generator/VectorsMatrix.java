@@ -1,4 +1,4 @@
-package gr.athenainnovation.imis.generator;
+/*package gr.athenainnovation.imis.generator;
 
 import gr.athenainnovation.imis.OSMContainer.OSMWay;
 import java.io.BufferedOutputStream;
@@ -12,7 +12,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
+*/
 /**
  * Generates input file for CLUTO's vcluster 
  * BalancedVectorsMatrix is preferred for better results. 
@@ -21,7 +21,7 @@ import java.util.Scanner;
  * @author imis-nkarag
  */
 
-
+/*
 public class VectorsMatrix {
     private final List<OSMWay> wayList;
     private final String vectorMatrixOutputFile;
@@ -80,3 +80,4 @@ public class VectorsMatrix {
         }
     }    
 }
+*/
