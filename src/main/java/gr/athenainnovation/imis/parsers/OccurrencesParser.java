@@ -41,5 +41,4 @@ public class OccurrencesParser {
         public List<String> getNamesList(){
             return namesList;
         }
-
 }
