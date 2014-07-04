@@ -2,8 +2,9 @@
 package gr.athenainnovation.imis.OSMRec;
 
 import gr.athenainnovation.imis.OSMContainer.OSMWay;
-import gr.athenainnovation.imis.generator.DistinctiveClasses;
 import gr.athenainnovation.imis.generator.Cluster;
+import gr.athenainnovation.imis.generator.DistinctiveClasses;
+import gr.athenainnovation.imis.utils.SimilarityComputingUtils;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * This class provides functionality for recommending classes to new osm instances of the provided OSM file
@@ -57,14 +59,17 @@ public class ClusteringRecommender {
             System.out.println("computing recommendations...");
             for (OSMWay node : wayList){
                 
-                ArrayList<Integer> nodeVector = node.getVector();
+                //ArrayList<Integer> nodeVector = node.getVector();
+                TreeMap<Integer,Double> nodeVector = node.getIndexVector();
                 ArrayList<Double> similarities = new ArrayList();
                 Map<Cluster, Double> clusterSimilarities = new HashMap<>();
 
                 for(Cluster averageClusterVector : averageVectors){
 
-                    ArrayList<Integer> averageVector = averageClusterVector.getClusterVector(); 
-                    Double similarity = cosineSimilarity(nodeVector, averageVector);
+                    //ArrayList<Integer> averageVector = averageClusterVector.getClusterVector(); 
+                    TreeMap<Integer,Double> averageIndexVector = averageClusterVector.getClusterIndexVector();
+                    
+                    Double similarity = SimilarityComputingUtils.cosineSimilarity(nodeVector, averageIndexVector);
                     similarities.add(similarity);
 
                     //this map contains all average cluster vectors with the corresponding similarities with current instance
@@ -75,11 +80,11 @@ public class ClusteringRecommender {
                 Cluster bestClusterForInstance = null;
                 for(Map.Entry<Cluster, Double> clusterSimilarity : clusterSimilarities.entrySet()){ 
 
-                      if(clusterSimilarity.getValue().equals(similarities.get(0))){ //there is a chance that there are more than one cluster with same 
+                    if(clusterSimilarity.getValue().equals(similarities.get(0))){ //there is a chance that there are more than one cluster with same 
                                                                                       //similarity. In this case we might get a slightly different score by picking the first one.
-                          bestClusterForInstance = clusterSimilarity.getKey();
-                          break; //found best cluster
-                      } 
+                        bestClusterForInstance = clusterSimilarity.getKey();
+                        break; //found best cluster
+                    } 
                 }
 
                 List<DistinctiveClasses> computedClasses = new ArrayList<>();
@@ -97,9 +102,9 @@ public class ClusteringRecommender {
                 for(DistinctiveClasses computedClass : computedClasses){            
                 if(i==5){break;} //recommendation for the first 5 classes. 
 
-                   if (actualClassList.contains(computedClass.getClassID())){     
+                    if (actualClassList.contains(computedClass.getClassID())){     
                         recommendationClasses.add(reverseMappings.get(computedClass.getClassID()));
-                   }
+                    }
                 i++;    
                 }
                 
@@ -121,27 +126,11 @@ public class ClusteringRecommender {
                     }
                 } 
             }
-            bufferedWriter.close();
-       System.out.println("Recommendations computed! Check the output.txt in the target/classes directory" + SEP);
-       }
-       catch(IOException ex){
-           System.out.println("Something went wrong computing the recommendations.. Please try again.");
-           //System.out.println(ex);
-       }
-    }
-    
-    private static double cosineSimilarity(ArrayList<Integer> vectorA, ArrayList<Integer> vectorB){
-        double dotProduct = 0.0;
-        double normA = 0.0;
-        double normB = 0.0;
-
-        for (int i = 0; i < vectorA.size(); i++) {
-            dotProduct += vectorA.get(i)*vectorB.get(i);
-            normA += vectorA.get(i)*vectorA.get(i);
-            normB += vectorB.get(i)*vectorB.get(i);
-        }  
-        double cosSim =  (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
-        return cosSim;
-    }
-    
+        bufferedWriter.close();
+        System.out.println("Recommendations computed! Check the output.txt in the target/classes directory" + SEP);
+        }
+        catch(IOException ex){
+           System.out.println("Something went wrong computing the recommendations.. Please try again.\n\n" + ex);
+        }
+    }   
 }
