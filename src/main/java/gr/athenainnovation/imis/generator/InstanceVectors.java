@@ -1,15 +1,18 @@
 package gr.athenainnovation.imis.generator;
 
 import com.hp.hpl.jena.ontology.OntClass;
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 import gr.athenainnovation.imis.OSMContainer.OSMNode;
+import gr.athenainnovation.imis.OSMContainer.OSMRelation;
 import gr.athenainnovation.imis.OSMContainer.OSMWay;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,15 +34,17 @@ public class InstanceVectors {
     private final Map<String, String> mappings;
     private final Map<String, Integer> mappingsWithIDs;
     //private final List<OSMNode> nodeList;
+    private final List<OSMWay> wayList;
+    private final List<OSMRelation> relationList;
     private int directClassID;
     private String directClassVectorPortion;
     private String indirectClassVectorPortion;
     private String geometriesPortion;
     private String textualFeaturesPortion;
+    private String relationFeaturesPortion;
     private final Map<String, List<String>> indirectClasses;
     private final Map<String, Integer> indirectClassesIDs;
     private int id;
-    private static final int numberOfFeatures = 3748;
     private static final int geometryAdditiveID = 1422;
                                                     //size of direct class IDs is 1372
                                                     //indirect class with IDs is 49
@@ -47,63 +52,64 @@ public class InstanceVectors {
                                                     //indirect classes should start with ID above 1372
     
     private final List<String> namesList;
-    private static String path;
+    private static String path;    
   
-    public InstanceVectors(Map<String,String> mappings, Map<String,Integer> mappingsWithIDs, Map<String, List<String>> indirectClasses, 
-            Map<String, Integer> indirectClassesIDs, List<OntClass> listHierarchy, List<OSMNode> nodeList, List<String> namesList, String path){
+    public InstanceVectors(List<OSMWay> wayList, List<OSMRelation> relationList, Map<String,String> mappings, 
+            Map<String,Integer> mappingsWithIDs, Map<String, List<String>> indirectClasses, 
+            Map<String, Integer> indirectClassesIDs, List<OntClass> listHierarchy, List<OSMNode> nodeList, 
+            List<String> namesList, String path){
        
-        
-       this.mappings = mappings;
-       this.mappingsWithIDs = mappingsWithIDs;
-       this.indirectClasses = indirectClasses;
-       this.indirectClassesIDs = indirectClassesIDs;
-       this.namesList = namesList;
-       InstanceVectors.path = path + "/classes/output/vectors";
-       directClassVectorPortion = "";
-       indirectClassVectorPortion = "";
-       geometriesPortion = "";
-       textualFeaturesPortion = "";
-       id = geometryAdditiveID;
+        this.wayList = wayList; 
+        this.relationList = relationList;
+        this.mappings = mappings;
+        this.mappingsWithIDs = mappingsWithIDs;
+        this.indirectClasses = indirectClasses;
+        this.indirectClassesIDs = indirectClassesIDs;
+        this.namesList = namesList;
+        InstanceVectors.path = path + "/classes/output/vectors";
+        directClassVectorPortion = "";
+        indirectClassVectorPortion = "";
+        geometriesPortion = "";
+        textualFeaturesPortion = "";
+        relationFeaturesPortion = "";
+        id = geometryAdditiveID;
        
     }
 
-    public void constructWayVectors(List<OSMWay> wayList) {
+    public void constructWayVectors() {
         new File(path).delete();
         System.out.print("constructing vectors");
         int prog = 0;
         int wayNodeListSize = wayList.size();       
         
         for (OSMWay wayNode : wayList) {      
-        ArrayList<Integer> nodeVector = new ArrayList<>(Collections.nCopies(numberOfFeatures, 0));  
-        wayNode.setVector(nodeVector);       
-        
         //for each wayNode parsed from osm xml:                
             createClassFeatures(wayNode);               //create portion of direct and indirect class relationships
             createGeometryFeatures(wayNode);            //create geometry portion
-            createNameOccurencesFeatures(wayNode.getTagKeyValue(), wayNode); //create textual features here            
-              
-//            for(Integer dirClass : wayNode.getClassIDs()){//we construct vectors for every class a a single instance
-//                String newVector = dirClass + " " + directClassVectorPortion + indirectClassVectorPortion + geometriesPortion + textualFeaturesPortion + " # " +wayNode.getClassIDs();
-//
-//            }
+            createNameOccurencesFeatures(wayNode.getTagKeyValue(), wayNode); //create textual features here        
+            createRelationFeatures(wayNode);              
      
-            //String vector = directClassID + " " + directClassVectorPortion + indirectClassVectorPortion + geometriesPortion + textualFeaturesPortion; //+ " # " +wayNode.getClassIDs();
+            //String vector = directClassID + " " + directClassVectorPortion + indirectClassVectorPortion 
+            //+ geometriesPortion + textualFeaturesPortion; //+ " # " +wayNode.getClassIDs();
             
-            //vector without class features and unclassified instances:
+            //vector without class features and without unclassified instances:
             if(directClassID != 0){
-                String vectorWithoutClassFeatures = directClassID + " " + geometriesPortion + textualFeaturesPortion + " # " + wayNode.getClassIDs() + " " + directClassID;
+                String vectorWithoutClassFeatures = directClassID + " " + geometriesPortion + textualFeaturesPortion 
+                                                                + " # " + wayNode.getClassIDs() + " " + directClassID;
                 writeToFile(vectorWithoutClassFeatures);
             }
             
             resetWayVector(); //clean fields for the next vector construction
             
-            if(prog == wayNodeListSize/2 || prog == wayNodeListSize/5 || prog == wayNodeListSize/10 || prog == wayNodeListSize/50){    
+            //kind of a progress bar
+            if(prog == wayNodeListSize/2 || prog == wayNodeListSize/5 || 
+                                                            prog == wayNodeListSize/10 || prog == wayNodeListSize/50){    
                 System.out.print(".");
             }
             prog++;
         }  
-    System.out.append(" done.\n");    
-    LOG.info("Vectors constructed successfully!");    
+        System.out.append(" done.\n");    
+        LOG.info("Vectors constructed successfully!");    
     }
 
     private void createClassFeatures(OSMWay wayNode) {
@@ -126,9 +132,11 @@ public class InstanceVectors {
                     sortedDirectIDs.add(directClassID); 
                     
                     //directClassVectorPortion = directClassVectorPortion + directClassID + ":1 ";
-                    wayNode.setClassID(directClassID); //the direct class id is the last direct class that the instance is found to belong
                     
-                    wayNode.getVector().set(directClassID, 1); //for adjacency matrix *clustering
+                    //the direct class id is the last direct class that the instance is found to belong
+                    wayNode.setClassID(directClassID); 
+                    
+                    wayNode.getIndexVector().put(directClassID, 0.0);
                     List<String> superClassesList = indirectClasses.get(className);
 
                     if (superClassesList != null){//check if the class has no superclasses                     
@@ -144,7 +152,7 @@ public class InstanceVectors {
                                 
                                 if(!(sortedIndirectIDs.contains(indirectID))){
                                     sortedIndirectIDs.add(indirectID);
-                                    wayNode.getVector().set(indirectID, 1);
+                                    wayNode.getIndexVector().put(indirectID, 0.0);
                                 }
                                 //the construction of the indirectClassVectorPortion has been moved below, sorted
                                 //indirectClassVectorPortion = indirectClassVectorPortion + indirectID + ":1 ";
@@ -154,7 +162,8 @@ public class InstanceVectors {
                     }
                 }
 //                    else
-//                    { //the concat of a ":0 " in the vector is not needed using SVM multiclass, so this stays out for this implementation
+//                    { //the concat of a ":0 " in the vector is not needed using SVM multiclass, 
+//                        //so this stays out for this implementation
 //                        directClassVectorPortion = directClassVectorPortion + mappingsWithIDs.get(k.getValue()) + ":0 ";
 //                    }
             }            
@@ -176,9 +185,13 @@ public class InstanceVectors {
             List<Geometry> points = way.getNodeGeometries();           
             Geometry firstPoint = points.get(0);            
             double radius = firstPoint.distance(wayGeometry.getCentroid());
-            double radiusBufferSmaller = radius*0.6; // buffer around the distance of the first point to centroid
-            double radiusBufferGreater = radius*1.4; //the rest of the point-to-centroid distances will be compared with these 
+            
+            // buffer around the distance of the first point to centroid
+            double radiusBufferSmaller = radius*0.6; 
+            //the rest of the point-to-centroid distances will be compared with these 
+            double radiusBufferGreater = radius*1.4; 
             isCircle = true;
+            
             for (Geometry point : points){                
                 double tempRadius = point.distance(wayGeometry.getCentroid());
                 boolean tempIsCircle = (radiusBufferSmaller <= tempRadius) && (tempRadius <= radiusBufferGreater);
@@ -188,8 +201,7 @@ public class InstanceVectors {
             
             double ratio = wayGeometry.getLength() / wayGeometry.getArea();            
             boolean tempIsCircle = ratio < 0.06; //arbitary value based on statistic measure of osm instances. 
-                                                 //The smaller this value, the closer this polygon resembles to a circle
-            
+                                                 //The smaller this value, the closer this polygon resembles to a circle            
             isCircle = isCircle && tempIsCircle;
         }
         return isCircle;
@@ -200,10 +212,14 @@ public class InstanceVectors {
         indirectClassVectorPortion = "";
         geometriesPortion = "";
         textualFeaturesPortion = "";
+        relationFeaturesPortion = "";
         id = geometryAdditiveID; 
     } 
     
     private void createNameOccurencesFeatures(Map<String, String> tags, OSMWay wayNode){
+        //namesList.indexOf(name) this index can be zero.
+        //In that case it conflicts the previous geometry id, so we increment id.
+        id++;  
         TreeSet<Integer> textIDs = new TreeSet<>();
         
         if (tags.keySet().contains("name")){           
@@ -216,10 +232,11 @@ public class InstanceVectors {
                 
                 for(String split : nameTagSplitList){
                     if (split.equals(name)){
-                    //tag name value found in this node, construct the id and concat it with ":1 "                                                                    
+                    //tag name value found in this node, construct the id and concat it with ":1 "     
                         int currentID = namesList.indexOf(name) + id;
                         textIDs.add(currentID); //make the proper id by adding the namesList index
-                        wayNode.getVector().set(currentID, 1);//vector for clustering
+                        //wayNode.getVector().set(currentID, 1);//vector for clustering
+                        wayNode.getIndexVector().put(currentID, 1.0);
                     }
                 }
             }
@@ -244,67 +261,67 @@ public class InstanceVectors {
 
         if(numberOfPoints<10){
             addGeometryFeature(id);
-            wayNode.getVector().set(id, 1);
+            wayNode.getIndexVector().put(id, 1.0);
             id += increment;
         }
         else if(numberOfPoints<20){
             addGeometryFeature(id+1);
-            wayNode.getVector().set(id+1, 1);
+            wayNode.getIndexVector().put(id+1, 1.0);
             id += increment;
         }
         else if(numberOfPoints<30){
             addGeometryFeature(id+2);
-            wayNode.getVector().set(id+2, 1);
+            wayNode.getIndexVector().put(id+2, 1.0);
             id += increment;
         }
         else if(numberOfPoints<40){
             addGeometryFeature(id+3);
-            wayNode.getVector().set(id+3, 1);
+            wayNode.getIndexVector().put(id+3, 1.0);
             id += increment;
         }
         else if(numberOfPoints<50){
             addGeometryFeature(id+4);
-            wayNode.getVector().set(id+4, 1);
+            wayNode.getIndexVector().put(id+4, 1.0);
             id += increment;
         }
         else if(numberOfPoints<75){
             addGeometryFeature(id+5);
-            wayNode.getVector().set(id+5, 1);
+            wayNode.getIndexVector().put(id+5, 1.0);
             id += increment;
         }
         else if(numberOfPoints<100){
             addGeometryFeature(id+6);
-            wayNode.getVector().set(id+6, 1);
+            wayNode.getIndexVector().put(id+6, 1.0);
             id += increment;
         }
         else if(numberOfPoints<150){
             addGeometryFeature(id+7);
-            wayNode.getVector().set(id+7, 1);
+            wayNode.getIndexVector().put(id+7, 1.0);
             id += increment;
         }
         else if(numberOfPoints<200){
             addGeometryFeature(id+8);
-            wayNode.getVector().set(id+8, 1);
+            wayNode.getIndexVector().put(id+8, 1.0);
             id += increment;
         }
         else if(numberOfPoints<300){
             addGeometryFeature(id+9);
-            wayNode.getVector().set(id+9, 1);
+            wayNode.getIndexVector().put(id+9, 1.0);
             id += increment;
         }
         else if(numberOfPoints<500){
             addGeometryFeature(id+10);
-            wayNode.getVector().set(id+10, 1);
+            wayNode.getIndexVector().put(id+10, 1.0);
             id += increment;
         }
         else if(numberOfPoints<1000){ 
             addGeometryFeature(id+11);
-            wayNode.getVector().set(id+11, 1);
+            wayNode.getIndexVector().put(id+11, 1.0);
             id += increment;
         }
         else{
             addGeometryFeature(id+12);
-            wayNode.getVector().set(id+13, 1);
+            wayNode.getIndexVector().put(id+12, 1.0);
             id += increment;
         }
     }
@@ -314,194 +331,185 @@ public class InstanceVectors {
         
         if(area<50){
             addGeometryFeature(id);
-            wayNode.getVector().set(id, 1);
+            wayNode.getIndexVector().put(id, 1.0);
             id += increment;
         }
         else if(area<100){
             addGeometryFeature(id + 1);
-            wayNode.getVector().set(id+1, 1);
+            wayNode.getIndexVector().put(id+1, 1.0);
             id += increment;
         }
         else if(area<150){
             addGeometryFeature(id + 2);
-            wayNode.getVector().set(id+2, 1);
+            wayNode.getIndexVector().put(id+2, 1.0);
             id += increment;
         }
         else if(area<200){
             addGeometryFeature(id + 3);
-            wayNode.getVector().set(id+3, 1);
+            wayNode.getIndexVector().put(id+3, 1.0);
             id += increment;
         }
         else if(area<250){
             addGeometryFeature(id + 4);
-            wayNode.getVector().set(id+4, 1);
+            wayNode.getIndexVector().put(id+4, 1.0);
             id += increment;
         }
         else if(area<300){
             addGeometryFeature(id + 5);
-            wayNode.getVector().set(id+5, 1);
+            wayNode.getIndexVector().put(id+5, 1.0);
             id += increment;
         }
         else if(area<350){
             addGeometryFeature(id + 6);
-            wayNode.getVector().set(id+6, 1);
+            wayNode.getIndexVector().put(id+6, 1.0);
             id += increment;
         }
         else if(area<400){
             addGeometryFeature(id + 7);
-            wayNode.getVector().set(id+7, 1);
+            wayNode.getIndexVector().put(id+7, 1.0);
             id += increment;
         }
         else if(area<450){
             addGeometryFeature(id + 8);
-            wayNode.getVector().set(id+8, 1);
+            wayNode.getIndexVector().put(id+8, 1.0);
             id += increment;
         }
         else if(area<500){
             addGeometryFeature(id + 9);
-            wayNode.getVector().set(id+9, 1);
+            wayNode.getIndexVector().put(id+9, 1.0);
             id += increment;
         }
         else if(area<750){
             addGeometryFeature(id + 10);
-            wayNode.getVector().set(id+10, 1);
+            wayNode.getIndexVector().put(id+10, 1.0);
             id += increment;
         }
         else if(area<1000){
             addGeometryFeature(id + 11);
-            wayNode.getVector().set(id+11, 1);
+            wayNode.getIndexVector().put(id+11, 1.0);
             id += increment;
         }
         else if(area<1250){
             addGeometryFeature(id + 12);
-            wayNode.getVector().set(id+12, 1);
+            wayNode.getIndexVector().put(id+12, 1.0);
             id += increment;
         }
         else if(area<1500){
             addGeometryFeature(id + 13);
-            wayNode.getVector().set(id+13, 1);
+            wayNode.getIndexVector().put(id+13, 1.0);
             id += increment;
         }
         else if(area<1750){
             addGeometryFeature(id + 14);
-            wayNode.getVector().set(id+14, 1);
+            wayNode.getIndexVector().put(id+14, 1.0);
             id += increment;
         }
         else if(area<2000){
             addGeometryFeature(id + 15);
-            wayNode.getVector().set(id+15, 1);
+            wayNode.getIndexVector().put(id+15, 1.0);
             id += increment;
         }
         else if(area<2250){
             addGeometryFeature(id + 16);
-            wayNode.getVector().set(id+16, 1);
+            wayNode.getIndexVector().put(id+16, 1.0);
             id += increment;
         }
         else if(area<2500){
             addGeometryFeature(id + 17);
-            wayNode.getVector().set(id+17, 1);
+            wayNode.getIndexVector().put(id+17, 1.0);
             id += increment;
         }
         else if(area<2750){
             addGeometryFeature(id + 18);
-            wayNode.getVector().set(id+18, 1);
+            wayNode.getIndexVector().put(id+18, 1.0);
             id += increment;
         }
         else if(area<3000){
             addGeometryFeature(id + 19);
-            wayNode.getVector().set(id+19, 1);
+            wayNode.getIndexVector().put(id+19, 1.0);
             id += increment;
         }
         else if(area<3500){
             addGeometryFeature(id + 20);
-            wayNode.getVector().set(id+20, 1);
+            wayNode.getIndexVector().put(id+20, 1.0);
             id += increment;
         }
         else if(area<4000){
             addGeometryFeature(id + 21);
-            wayNode.getVector().set(id+21, 1);
+            wayNode.getIndexVector().put(id+21, 1.0);
             id += increment;
         }
         else if(area<5000){
             addGeometryFeature(id + 22);
-            wayNode.getVector().set(id+22, 1);
+            wayNode.getIndexVector().put(id+22, 1.0);
             id += increment;
         }
         else if(area<10000){
             addGeometryFeature(id + 23);
-            wayNode.getVector().set(id+23, 1);
+            wayNode.getIndexVector().put(id+23, 1.0);
             id += increment;
         }
         else{
             addGeometryFeature(id + 24);
-            wayNode.getVector().set(id+24, 1);
+            wayNode.getIndexVector().put(id+24, 1.0);
             id += increment;
         }
     }
     
     private void addGeometryFeature(int id){
-        geometriesPortion = geometriesPortion + id +":1 ";
-        
+        geometriesPortion = geometriesPortion + id +":1 ";       
     }
     
     private void addTextualFeature(int id){
         textualFeaturesPortion = textualFeaturesPortion + id + ":1 ";
     }    
-
-
     
+    private void createGeometryFeatures(OSMWay wayNode){
     
-private void createGeometryFeatures(OSMWay wayNode) {
-    
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////  geometry Portion ///////////////////            
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////  geometry Portion ///////////////////            
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
         // geometry type feature //
         String  geometryType= wayNode.getGeometry().getGeometryType();
-        //System.out.println("geometry Type" + geometryType);
         switch (geometryType) {
             case "LineString":
-                //System.out.println("LineString");
                 addGeometryFeature(id);
-                wayNode.getVector().set(id, 1);//vector for clustering
+                wayNode.getIndexVector().put(id, 1.0);
                 id += 4;
                 break;
             case "Polygon":
-                //System.out.println("Polygon");
                 addGeometryFeature(id+1); //the IDs are unique for each geometry type
-                wayNode.getVector().set(id, 1);//vector for clustering
+                wayNode.getIndexVector().put(id, 1.0);
                 id += 4;
                 break;
             case "LinearRing":
-                //System.out.println("LinearRing");
                 addGeometryFeature(id+2);
-                wayNode.getVector().set(id, 1);//vector for clustering
+                wayNode.getIndexVector().put(id, 1.0);
                 id += 4;
                 break;
             case "Point":
-                //System.out.println("Point");
                 addGeometryFeature(id+3);
-                wayNode.getVector().set(id, 1);//vector for clustering
+                wayNode.getIndexVector().put(id, 1.0);
                 id += 4;                                        
                 break;
         }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // rectangle geometry shape feature //
         id++;
         if (wayNode.getGeometry().isRectangle()){                 
             addGeometryFeature(id);
-            wayNode.getVector().set(id, 1);//vector for clustering
+            wayNode.getIndexVector().put(id, 1.0);
         }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // number of points of geometry feature //
         id++;           
         int numberOfPoints = wayNode.getGeometry().getNumPoints();
         numberOfPointsFeature(numberOfPoints, wayNode);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // area of geometry feature //
 
         id++;
@@ -519,12 +527,66 @@ private void createGeometryFeatures(OSMWay wayNode) {
 
         }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
         // resembles to a circle feature //  
         id++;
         if(geometryResemblesCircle(wayNode)){ //this method checks if the shape of the geometry resembles to a circle
             addGeometryFeature(id);
-            wayNode.getVector().set(id, 1);//vector for clustering
+            wayNode.getIndexVector().put(id, 1.0);
         }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // mean edge feature //
+        id++;
+        Coordinate[] nodeGeometries = wayNode.getGeometry().getCoordinates();
+        List<Double> edgeLengths = new ArrayList();
+        
+        if(!wayNode.getGeometry().getGeometryType().toUpperCase().equals("POINT")){
+            GeometryFactory geometryFactory = new GeometryFactory();
+            for (int i = 0; i < nodeGeometries.length-1; i++) {
+                Coordinate[] nodePair = new Coordinate[2];
+                nodePair[0] = nodeGeometries[i];
+                nodePair[1] = nodeGeometries[i+1];
+                LineString tempGeom = geometryFactory.createLineString(nodePair);
+                edgeLengths.add(tempGeom.getLength()); 
+            }
+        }
+        else{          
+            edgeLengths.add(0.0);
+        }
+        double edgeSum = 0;
+        for(Double edge : edgeLengths){
+            edgeSum = edgeSum + edge;
+        }
+        double mean = edgeSum/edgeLengths.size();
+        geometriesPortion = geometriesPortion + id +":" + mean + " ";
+        wayNode.getIndexVector().put(id, mean);
+        
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // variance feature//
+        id++;
+        double sum = 0;
+        for(Double edge : edgeLengths){
+            sum = sum + (edge-mean)*(edge-mean);
+        }
+        double variance = sum/edgeLengths.size();
+        wayNode.getIndexVector().put(id, variance);
+        geometriesPortion = geometriesPortion + id +":" + variance + " ";
+    }
+
+    private void createRelationFeatures(OSMWay wayNode) {      
+        id++;
+        int relations = 0;
+        for(OSMRelation relation : relationList){
+
+            if(relation.getMemberReferences().contains(wayNode.getID())){
+                relations++;
+                Map<String, String> tags = relation.getTagKeyValue();
+                for(Entry<String, String> tag : tags.entrySet()){
+                  
+                }             
+            }
+        }
+        //add appropriate feature     
+        relationFeaturesPortion = relationFeaturesPortion + id + ":" + relations + " ";
     }
 }
