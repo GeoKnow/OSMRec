@@ -1,14 +1,16 @@
 package gr.athenainnovation.imis.scoring;
 
 import gr.athenainnovation.imis.OSMContainer.OSMWay;
-import gr.athenainnovation.imis.generator.DistinctiveClasses;
 import gr.athenainnovation.imis.generator.Cluster;
+import gr.athenainnovation.imis.generator.DistinctiveClasses;
+import gr.athenainnovation.imis.utils.SimilarityComputingUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Scoring the clustering process
@@ -25,10 +27,10 @@ public class ClusteringScorer {
     private float score = 100f;
 
     public ClusteringScorer(List<OSMWay> wayList, ArrayList<Cluster> averageVectors, Map<String,Integer> mappingsWithIDs) {
+        
        this.wayList = wayList;
        this.averageVectors = averageVectors;
-       this.mappingsWithIDs = mappingsWithIDs;       
-        
+       this.mappingsWithIDs = mappingsWithIDs;              
     }    
     
     public void score(){
@@ -44,26 +46,32 @@ public class ClusteringScorer {
             for (OSMWay node : wayList){
                 
                 int tempScore = 0;
-                ArrayList<Integer> nodeVector = node.getVector();
+                //ArrayList<Integer> nodeVector = node.getVector();
+                
+                TreeMap<Integer,Double> nodeVector = node.getIndexVector();
                 ArrayList<Double> similarities = new ArrayList();
                 Map<Cluster, Double> clusterSimilarities = new HashMap<>();
 
                 for(Cluster averageClusterVector : averageVectors){
 
-                    ArrayList<Integer> averageVector = averageClusterVector.getClusterVector(); 
-                    Double similarity = cosineSimilarity(nodeVector, averageVector);
+                    //ArrayList<Integer> averageVector = averageClusterVector.getClusterVector(); 
+                    TreeMap<Integer,Double> averageIndexVector = averageClusterVector.getClusterIndexVector();
+                    //Double similarity = cosineSimilarity(nodeVector, averageVector);
+                    Double similarity = SimilarityComputingUtils.cosineSimilarity(nodeVector, averageIndexVector);
                     similarities.add(similarity);
 
-                    //this map contains all average cluster vectors with the corresponding similarities with current instance
-                    clusterSimilarities.put(averageClusterVector, similarity); //cluster vector and similarity of the cluster vector and current instance vector
+                    //this map contains all average cluster vectors with the corresponding similarities with current instance                    
+                    //cluster vector and similarity of the cluster vector and current instance vector
+                    clusterSimilarities.put(averageClusterVector, similarity); 
                     Collections.sort(similarities, Collections.reverseOrder());
                 }
 
                 Cluster bestClusterForInstance = null;
                 for(Map.Entry<Cluster, Double> clusterSimilarity : clusterSimilarities.entrySet()){ 
                     
-                      if(clusterSimilarity.getValue().equals(similarities.get(0))){ //there is a chance that there are more than one cluster with same 
-                                                                                      //similarity. In this case we might get a slightly different score by picking the first one.
+                      if(clusterSimilarity.getValue().equals(similarities.get(0))){ 
+                          //there is a chance that there are more than one cluster with same 
+                          //similarity. In this case we might get a slightly different score by picking the first one.                                                             
                           bestClusterForInstance = clusterSimilarity.getKey();
                           break; //found best cluster
                       } 
@@ -75,7 +83,7 @@ public class ClusteringScorer {
                 
                 int i =0;               
                 for(DistinctiveClasses computedClass : computedClasses){            
-                    if(i==5){break;} 
+                    if(i==1){break;} 
 
                     if (actualClassList.contains(computedClass.getClassID())){      
                         tempScore = 1;
@@ -89,23 +97,7 @@ public class ClusteringScorer {
             score = 100 - ((float)scores*100/ (float)instance);
             setScore(score);
             System.out.println("total score (error): "+ score); // + " loops" + instance + " scores " + scores);
-    }
-    
-    private static double cosineSimilarity(ArrayList<Integer> vectorA, ArrayList<Integer> vectorB){
-    //computes cosine similarity for the two provided vectors    
-        
-        double dotProduct = 0.0;
-        double normA = 0.0;
-        double normB = 0.0;
-
-        for (int i = 0; i < vectorA.size(); i++) {
-            dotProduct += vectorA.get(i)*vectorB.get(i);
-            normA += vectorA.get(i)*vectorA.get(i);
-            normB += vectorB.get(i)*vectorB.get(i);
-        }  
-        double cosSim =  (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
-        return cosSim;
-    }
+    }    
     
     private void setScore(float score){
         this.score = score;
@@ -113,6 +105,5 @@ public class ClusteringScorer {
     
     public float getScore(){
         return score;
-    }
-    
+    }    
 }
