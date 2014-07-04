@@ -62,7 +62,6 @@ public class OntologyParser {
         while (classes.hasNext()) {
             String className;
             OntClass obj = (OntClass) classes.next();           
-            //String className = obj.getLocalName().toString();
             
             //compare localname with class name from map and call getSuperclass     
             if (obj.hasSubClass()) {
@@ -97,9 +96,7 @@ public class OntologyParser {
             String key = listHierarchy.get(i).toString().replace("http://linkedgeodata.org/ontology/", "");      
             //we add 1 to the ID because we want IDs beginning from 1. listHierarchy has index beginning from 0
             indirectClassesIDs.put(key, i + additiveID); //the IDs start from 1373 to avoid duplicate IDs at the vectorConstructor
-
-        } 
-        
+        }        
     }
     
     private void setOntologyModel(OntModel ontologyModel){
@@ -131,9 +128,8 @@ public class OntologyParser {
     public Map<String, Integer> getIndirectClassesIDs(){
         return this.indirectClassesIDs;
     }
-    
-    
-    //commented out. Created for developing/debugging. 
+       
+    //developing/debugging. 
     /*private static void writeToFile(String text) { 
         
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(new File("src/main/resources/output/classesTest.txt"), true))) {
@@ -160,6 +156,5 @@ public class OntologyParser {
             }   
         }
     writer.close();                      
-    }*/
-       
+    }*/       
 }
