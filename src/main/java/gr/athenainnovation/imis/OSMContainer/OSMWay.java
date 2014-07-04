@@ -3,11 +3,13 @@ package gr.athenainnovation.imis.OSMContainer;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 
 /**
@@ -16,17 +18,9 @@ import java.util.Set;
  * @author imis-nkarag
  */
 
-public class OSMWay {
+public class OSMWay implements Serializable{
     
-    private String id;
-    private String lang;
-    private String action; //e.g modify
-    private String visible; 
-    private String timestamp;
-    private String uid;
-    private String user;
-    private String version;
-    private String changeset;    
+    private String id;   
     private int classID;
     private Set<Integer> classIDs;   
     private final List<String> nodeReferences = new ArrayList(); //node references  //made final
@@ -34,24 +28,12 @@ public class OSMWay {
     private Coordinate[] coordinateList;    
     private final Map<String, String> tags = new HashMap<>();      
     private Geometry geometry;
-    private ArrayList vector;
+    private TreeMap<Integer,Double> indexVector = new TreeMap<>();   
     
     //way attributes getters 
     public String getID(){
         return id;
-    }
-    
-    public String getlang(){
-        return lang;
-    }
-
-    public String getAction(){
-        return action;
-    }
-    
-    public String getVisible(){
-        return visible;
-    }  
+    } 
     
     public List<Geometry> getNodeGeometries(){
         return nodeGeometries;
@@ -64,34 +46,14 @@ public class OSMWay {
     
     public Geometry getGeometry(){
         return geometry;
-    }
-    
-    public String getTimestamp(){
-        return timestamp;
-    }
-    
-    public String getUid(){
-        return uid;
-    }    
-    
-    public String getUser(){
-        return user;
-    }
- 
-    public String getVersion(){
-        return version;
-    }    
-
-    public String getChangeset(){
-        return changeset;
-    }    
+    }   
     
     public List<String> getNodeReferences(){
         return nodeReferences;
     }
     
     public int getNumberOfNodes(){
-        return this.nodeReferences.size();
+        return nodeReferences.size();
     }
     
     public Map<String, String> getTagKeyValue(){
@@ -99,57 +61,25 @@ public class OSMWay {
     }
     
     public int getClassID(){
-        return this.classID;
+        return classID;
     }
     
     public Set<Integer> getClassIDs(){
-        return this.classIDs;
+        return classIDs;
+    }
+      
+    public TreeMap<Integer, Double> getIndexVector(){
+        return indexVector;
     }
     
-    public ArrayList<Integer> getVector(){
-        return vector;
-    }
-    
-    public void setVector(ArrayList<Integer> vector){
-        this.vector = vector;
+    public void setIndexVector(TreeMap<Integer, Double> indexVector){
+        this.indexVector = indexVector;
     }
     
     //way attributes setters
     public void setID(String id){
         this.id = id;
     }
-    
-    public void setLang(String lang){
-        this.lang = lang;
-    }
-    
-    public void setAction(String action){
-        this.action = action;
-    }
-    
-    public void setVisible(String visible){
-        this.visible = visible;
-    }
-    
-    public void setTimestamp(String timestamp){
-        this.timestamp = timestamp;
-    }
-    
-    public void setUid(String uid){
-        this.uid = uid;
-    }    
-    
-    public void setUser(String user){
-        this.user = user;
-    }
-
-    public void setVersion(String version){
-        this.version = version;
-    }    
- 
-    public void setChangeset(String changeset){
-        this.changeset = changeset;
-    } 
     
     public void setTagKeyValue(String tagKey, String tagValue){
         this.tags.put(tagKey, tagValue);
