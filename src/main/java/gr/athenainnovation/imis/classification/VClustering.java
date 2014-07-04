@@ -29,7 +29,8 @@ public class VClustering {
             }   
             
             clusteringCommand = path + "/src/main/resources/vcluster " 
-            + "-clmethod=graph -sim=dist -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." + clusters + " " 
+            + "-clmethod=rb -sim=cos -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." 
+            + clusters + " " 
             + path + "/target/classes/output/vmatrix.mat "
             + clusters; //number of desired clusters based on the average instance per cluster. 
         }
@@ -42,7 +43,8 @@ public class VClustering {
             }  
             
             clusteringCommand = path + "/src/main/resources/vcluster.exe " 
-            + "-clmethod=graph -sim=dist -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." + clusters + " " 
+            + "-clmethod=rb -sim=cos -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." 
+            + clusters + " " 
             + path + "/target/classes/output/vmatrix.mat "
             + clusters; //number of desired clusters based on the average instance per cluster.
         }
@@ -59,7 +61,6 @@ public class VClustering {
                 System.exit(0);
             }
             Logger.getLogger(OSMRec.class.getName()).log(Level.SEVERE, null, ex);
-        } 
-        
+        }         
     }
 }
