@@ -42,9 +42,8 @@ public class PredictionsScorer {
                 List<Integer> classesFromDelimiter = new ArrayList();
                 
                 for(int i = 0;i < (stringIDs.length-1);i++){
-
-                    integerIDs[i] = Integer.parseInt(stringIDs[i]); //this array contains the IDs of every class of each instance
-
+                    //this array contains the IDs of every class of each instance
+                    integerIDs[i] = Integer.parseInt(stringIDs[i]); 
                     classesFromDelimiter.add(integerIDs[i]);
                 }
                 String[] splitContent = predictionsNextLine.split("\\s+");
@@ -55,7 +54,6 @@ public class PredictionsScorer {
 
                         double value = parseDouble(splitContent[j]); //e.g. value -> 103.142612  Id-> 1210
                         classesWithIDs.put(value,j);
-
                     }
                 }
   
@@ -65,13 +63,10 @@ public class PredictionsScorer {
                 int k = 0;
                 for (Double key : sortedMapOfClassValues.descendingKeySet()){
                     
-                    if(k==4){break;} 
-            
+                    if(k==4){break;}          
                     if(classesFromDelimiter.contains(sortedMapOfClassValues.get(key))){
-
                         score = 1;
                         correct++;
-
                     }
                 k++;                    
                 }
@@ -84,8 +79,7 @@ public class PredictionsScorer {
             System.out.println("number of instances: " + loops + " and score (error): " + result + " correct: " + correct );           
         } 
         catch (FileNotFoundException ex) {
-            System.err.println("something went wrong constructing the vectors file.. check your input file parameter");
-            //Logger.getLogger(PredictionsScorer.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("something went wrong constructing the vectors file.. check your input file parameter\n\n\n" + ex);
         }
     }      
 }
