@@ -1,5 +1,5 @@
 
-package gr.athenainnovation.imis.generator;
+/*package gr.athenainnovation.imis.generator;
 
 import com.vividsolutions.jts.geom.Geometry;
 import gr.athenainnovation.imis.OSMContainer.OSMWay;
@@ -16,14 +16,14 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
+*/
 /**
  * Generates an adjacency matrix to be used for input in the scluster process
  * However BalancedVectorMatrix with vcluster process is preferred for better performance and results.
  * 
  * @author imis-nkarag
  */
-
+/*
 public class AdjacencyMatrix {
     private final List<OSMWay> wayList;
     private final String path;
@@ -167,3 +167,4 @@ public class AdjacencyMatrix {
         }
     }   
 }
+*/
