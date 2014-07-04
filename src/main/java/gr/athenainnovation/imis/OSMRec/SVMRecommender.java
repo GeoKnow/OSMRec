@@ -24,7 +24,8 @@ public class SVMRecommender {
     
     private static final String SEP = System.lineSeparator();
     
-    public void recommend(String recommendationsFile, File svmPredictionsOutputFile, File testFile, Map<String,Integer> mappingsWithIDs, List<OSMWay> wayList, String path){
+    public void recommend(String recommendationsFile, File svmPredictionsOutputFile, File testFile, 
+                                               Map<String,Integer> mappingsWithIDs, List<OSMWay> wayList, String path){
         
         Map<Integer,String> reverseMappings = new HashMap();
         
@@ -35,8 +36,10 @@ public class SVMRecommender {
         int instance = 0;
         try {
             Scanner predictionsInput = new Scanner(svmPredictionsOutputFile);
-            new File(path + "/classes/output/" + recommendationsFile).delete(); //delete recommendations file if exists from previous execution
-            try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(path + "/classes/output/" + recommendationsFile))) {
+            //delete recommendations file if exists from previous execution
+            new File(path + "/classes/output/" + recommendationsFile).delete(); 
+            try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(path + "/classes/output/" 
+                                                                                            + recommendationsFile))) {
                 System.out.print("computing recommendations..");
                 
                 while(predictionsInput.hasNextLine()){
@@ -63,8 +66,7 @@ public class SVMRecommender {
                         
                         if(k==5){break;}
                         bufferedWriter.write(reverseMappings.get(sortedMapOfClassValues.get(key)));        
-                        bufferedWriter.newLine();
-                        
+                        bufferedWriter.newLine();                      
                         k++;
                     }
                     instance++;
@@ -73,8 +75,8 @@ public class SVMRecommender {
         System.out.println("Recommendations computed! Check the output file.");
         }
         catch(IOException ex ){
-            System.out.println("Something went wrong computing the recommendations.. check the input file parameters" + ex);
+            System.out.println("Something went wrong computing the recommendations.. "
+                                             + "check the input file parameters" + ex);
         } 
-
     }
 }
