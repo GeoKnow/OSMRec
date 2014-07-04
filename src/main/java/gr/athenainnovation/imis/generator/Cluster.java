@@ -1,36 +1,37 @@
 package gr.athenainnovation.imis.generator;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.TreeMap;
 
 /**
  * Contains instances of the cluster average vectors 
  * @author imis-nkarag
  */
+
 public class Cluster implements Serializable{
-    private final Integer clusterID;
-    private final Collection<Integer> clusterInstances;
-    private ArrayList<Integer> clusterVector;
-    private List<DistinctiveClasses> averageVectorClasses;
     
+    private final Integer clusterID;
+    //private final Collection<Integer> clusterInstances;
+    private List<DistinctiveClasses> averageVectorClasses;
+    private TreeMap<Integer, Double> clusterIndexVector;  
     
     public Cluster(Integer clusterID, Collection<Integer> clusterInstances){
         this.clusterID = clusterID;
-        this.clusterInstances = clusterInstances;
+        //this.clusterInstances = clusterInstances;
     }
     
     public Integer getClusterID(){
         return clusterID;
     }
     
-    public void  setVector(ArrayList<Integer> vector){
-        this.clusterVector = vector;
+    public void  setIndexVector(TreeMap<Integer,Double> indexVector){
+        this.clusterIndexVector = indexVector;
     }
     
-    public ArrayList getClusterVector(){
-        return clusterVector;
+    public TreeMap<Integer,Double> getClusterIndexVector(){
+        return clusterIndexVector;
     }
     
     public void setSortedClusterClasses(List<DistinctiveClasses> majorityClasses){
