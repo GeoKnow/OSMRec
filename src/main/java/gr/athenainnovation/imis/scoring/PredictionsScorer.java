@@ -18,7 +18,7 @@ import java.util.TreeMap;
 
 public class PredictionsScorer {
 
-    public void computeScore(File predictionsFile, File testFile, Map<String,Integer> mappings){
+    public void computeScore(File predictionsFile, File testFile, int numberOfClassesToScore){
         int correct = 0;
         try {
             Scanner predictionsInput = new Scanner(predictionsFile);            
@@ -36,12 +36,13 @@ public class PredictionsScorer {
                 String testClasses[] = testNextLine.split("#",2);
                 
                 testClasses[1] = testClasses[1].replaceAll("[\\[,\\]]", "");
+                //testClasses[1] = testClasses[1].replaceAll("[\\[,\\]]", "");
                 String[] stringIDs = testClasses[1].trim().split("\\s+");
-
+                
                 Integer[] integerIDs = new Integer[stringIDs.length]; 
                 List<Integer> classesFromDelimiter = new ArrayList();
                 
-                for(int i = 0;i < (stringIDs.length-1);i++){
+                for(int i = 0;i < (stringIDs.length);i++){
                     //this array contains the IDs of every class of each instance
                     integerIDs[i] = Integer.parseInt(stringIDs[i]); 
                     classesFromDelimiter.add(integerIDs[i]);
@@ -63,7 +64,7 @@ public class PredictionsScorer {
                 int k = 0;
                 for (Double key : sortedMapOfClassValues.descendingKeySet()){
                     
-                    if(k==4){break;}          
+                    if(k==numberOfClassesToScore){break;}          
                     if(classesFromDelimiter.contains(sortedMapOfClassValues.get(key))){
                         score = 1;
                         correct++;
@@ -76,6 +77,7 @@ public class PredictionsScorer {
             
             float result = 100-((float)scores*100/(float)loops);
             System.out.print(". done.\n");
+            System.out.println("score for " + numberOfClassesToScore + " classes\n\n");
             System.out.println("number of instances: " + loops + " and score (error): " + result + " correct: " + correct );           
         } 
         catch (FileNotFoundException ex) {
