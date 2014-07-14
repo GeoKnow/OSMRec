@@ -92,7 +92,6 @@ public class ClusteringRecommender {
                     computedClasses = bestClusterForInstance.getSortedClusterClasses();
                 }
                 Set<Integer> actualClassList = node.getClassIDs();
-                actualClassList.add(node.getClassID());
 
                 bufferedWriter.write(SEP + "Node ID: " + node.getID());
                 bufferedWriter.newLine();
