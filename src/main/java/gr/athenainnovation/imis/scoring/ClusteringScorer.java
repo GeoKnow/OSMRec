@@ -46,7 +46,6 @@ public class ClusteringScorer {
             for (OSMWay node : wayList){
                 
                 int tempScore = 0;
-                //ArrayList<Integer> nodeVector = node.getVector();
                 
                 TreeMap<Integer,Double> nodeVector = node.getIndexVector();
                 ArrayList<Double> similarities = new ArrayList();
@@ -54,9 +53,7 @@ public class ClusteringScorer {
 
                 for(Cluster averageClusterVector : averageVectors){
 
-                    //ArrayList<Integer> averageVector = averageClusterVector.getClusterVector(); 
                     TreeMap<Integer,Double> averageIndexVector = averageClusterVector.getClusterIndexVector();
-                    //Double similarity = cosineSimilarity(nodeVector, averageVector);
                     Double similarity = SimilarityComputingUtils.cosineSimilarity(nodeVector, averageIndexVector);
                     similarities.add(similarity);
 
@@ -96,7 +93,7 @@ public class ClusteringScorer {
 
             score = 100 - ((float)scores*100/ (float)instance);
             setScore(score);
-            System.out.println("total score (error): "+ score); // + " loops" + instance + " scores " + scores);
+            System.out.println("total score (error): "+ score); 
     }    
     
     private void setScore(float score){
