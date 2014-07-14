@@ -25,6 +25,7 @@ import gr.athenainnovation.imis.parsers.OSMParser;
 import gr.athenainnovation.imis.parsers.OccurrencesParser;
 import gr.athenainnovation.imis.parsers.OntologyParser;
 import gr.athenainnovation.imis.scoring.ClusteringScorer;
+import gr.athenainnovation.imis.scoring.PredictionsScorer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,7 +33,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,70 +41,138 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.opengis.referencing.FactoryException;
 
+
+//import org.openstreetmap.josm.plugins.Plugin;
+//import org.openstreetmap.josm.plugins.PluginInformation;
+
 /**
- *  Entrance of the program
- *  Creates objects for parsing mappings file, ontology, name occurrences and OSM file
- *  Based on the provided arguments trains/tests using SVM or Clustering methodology.
+ *  Creates objects for parsing mappings file, class ontology, textual info, and the OSM input file
+ *  Constructs Vectors for the OSM instances
+ *  Trains/tests using SVM, Clustering or KNN methodology based on the provided arguments.
  * 
  *  @author imis-nkarag
  */
 
-public class OSMRec {   
+public class OSMRec{// extends Plugin{   
     
     private static final String OS = System.getProperty("os.name").toLowerCase();
-    private static final int COLUMN_SIZE = 3750;
+    private static final String PATH = Paths.get("").toAbsolutePath().toString();
+    private static final String TEST_SVM_OUTPUT = "testSVM";
+    private static final int COLUMN_SIZE = 3750; //vector features
+    private static int kClusters = 1;
+    private static int averageInstancesPerCluster = -1; //default: no k parameter specified
+    private static int trainAlgorithm = 0;
+    private static int instancesSize = 0;
+    private static boolean trainMode = false;
+    private static boolean testMode = false;
+    private static boolean isLinux = false;
+    private static boolean wrongArguments = false;
+    private static Double confParameter = null;
+    private static String osmFile = null;  
+    private static String recommendationsFileSVM = "output.txt";
+    private static String recommendationsFileClustering = "output.txt";
+    private static String model = "model0";
     private static Map<String,String> mappings;
     private static Map<String,Integer> mappingsWithIDs;
     private static Map<String, List<String>> indirectClasses;
+    private static Map<String, Integer> indirectClassesWithIDs;
     private static List<OSMNode> nodeList;
     private static List<OSMWay> wayList;
     private static List<OSMRelation> relationList;
-    private static Map<String, Integer> indirectClassesWithIDs;
     private static List<OntClass> listHierarchy;
-    private static List<String> namesList;  
-    private static int trainAlgorithm;
-    private static boolean trainMode;
-    private static String path;
-    private static boolean testMode;
-    //private static String matrixFilePath; //adjacency matrix   
-    public static void main(String[] args ) throws FileNotFoundException 
+    private static List<String> namesList;     
+    
+//    public OSMRec(PluginInformation info){
+//        super(info);
+//    }
+    
+    public static void main(String[] args) throws FileNotFoundException 
     {   
-       
-       Path currentPath = Paths.get("");
-       path = currentPath.toAbsolutePath().toString();
-       trainAlgorithm = 0;
-       trainMode = false;
-       testMode = false;
+        
+        defineOS(); //check OS type
+        parseArguments(args);       
+        clearFiles(); //clear files from previous execution if exist
+        parseFiles(); //parse ontology, tags-to-class mappings, textual info, osm file       
+        constructVectors(); //construct vectors for the instances of the osm input file
+         
+        
+    //////////////////      Algorithm 1      //////////////////      
+        if(confParameter == null && trainMode && trainAlgorithm == 1){ 
+            chooseOptimalConfParameter(); //if conf parameter is not set, find best conf param            
+        }
+        else{  
+            if(trainMode && trainAlgorithm == 1){
+                trainSVM();
+            }
+            if(testMode && trainAlgorithm == 1){
+                if(model.startsWith("/") || model.startsWith("file:///")){
+                    if(new File(model).exists()){
+                        testSVM();
+                    }
+                    else{
+                        System.out.println(model + " not found");
+                        System.out.println("\nTry to train a model first and then run test "
+                                + "or define another path for the model to use.\n");
+                        System.exit(0);
+                    }
+                }
+                else{
+                    if(new File(PATH +"/classes/output/"+ model).exists()){
+                        testSVM();
+                    }
+                    else {
+                        System.out.println(PATH +"/classes/output/"+ model + " not found");
+                        System.out.println("\nTry to train a model first and then run test "
+                                + "or define another path for the model to use.\n");
+                        System.exit(0);
+                    }
+                }
+            }    
+        }       
 
-       Double confParameter = null;       
-       String arg;
-       String value;
-       String osmFile = null;
-       String testSvmOutputFile = "testSVM";
-       String model = "model0";      
-       String recommendationsFileSVM = "output.txt";
-       String recommendationsFileClustering = "output.txt";
-       
-       int i =0;       
-       int kClusters; //default value for the number of clusters is 10.
-       int instancesSize;
-       int averageInstancesPerCluster = -1; //default: no k parameter specified
-       boolean wrongArguments = false;
-       //matrixFilePath = path + "/classes/output/matrix.graph";   //adjacency matrix
-       boolean isLinux =false;
-       
-       if(OS.indexOf("nux") >= 0){
+    /////////////////       Algorithm 2      /////////////////
+        if(averageInstancesPerCluster == -1 && trainMode && trainAlgorithm == 2){
+            chooseOptimalNumberOfClusters();
+        }
+        else {  
+            if(trainMode && trainAlgorithm == 2){
+                trainClustering();
+            }
+            if(testMode && trainAlgorithm == 2){
+                testClustering();
+            }
+        } 
+        
+    /////////////////       Algorithm 3      /////////////////  
+        if(trainMode && trainAlgorithm == 3){
+            trainKNN();
+        }
+        
+        if(testMode && trainAlgorithm == 3){
+            testKNN();            
+        }              
+    }
+    
+    private static void defineOS() {
+       if(OS.contains("nux")){
            isLinux = true;
        }
-       else if(OS.indexOf("win") >= 0){
+       else if(OS.contains("win")){
            isLinux = false;
        }
        else{
            System.out.println("Your operating system is not supported yet :/");
            System.exit(0);
        }
-       
-       while (i < args.length){
+    }
+    
+    private static void parseArguments(String[] args){
+        //Double confParameter = null;
+        //osmFile = null;
+        String arg;
+        String value;
+        int i =0;
+        while (i < args.length){
 
            arg = args[i];
            if(arg.startsWith("-")){ 
@@ -233,17 +301,26 @@ public class OSMRec {
                     + "-i inputFile [-c confParameter] [-k averageSize] [-m model]\n or\n"
                     + "java -jar OSMRec-1.0.jar -test trainAlgorithm -i inputFile [-o outputFile]\n");
 	   System.exit(0);
-       } 
-       
-        try { //clear the vectors file if it exists from previous execution                 
-            FileOutputStream writer = new FileOutputStream(path + "/classes/output/vectors"); 
-            writer.close();
-        } catch (IOException ex) {
-            Logger.getLogger(OSMRec.class.getName()).log(Level.SEVERE, null, ex);
-        }
-       
-        File file = new File(path + "/classes/mappings/Map"); 
+       }
+    }
 
+    private static void clearFiles() {        
+        File folderToScan = new File(PATH + "/classes/output/");
+        File[] listOfFiles = folderToScan.listFiles();
+        String fileToDelete;  
+        for (File listOfFile : listOfFiles) {
+            if (listOfFile.isFile()) {
+                fileToDelete = listOfFile.getName();
+                if (fileToDelete.startsWith("vmatrix") || fileToDelete.startsWith("vector")) {
+                    new File(PATH + "/classes/output/" + fileToDelete).delete();
+                }
+            }
+        }       
+    }    
+
+    private static void parseFiles() {
+        
+        File file = new File(PATH + "/classes/mappings/Map"); 
         MappingsParser mappingsParser = new MappingsParser();
         try {   
             mappingsParser.parseFile(file);
@@ -253,26 +330,23 @@ public class OSMRec {
         mappings = mappingsParser.getMappings();
         mappingsWithIDs = mappingsParser.getMappingsWithIDs();           
       
-        OntologyParser ontologyParser = new OntologyParser(path);
+        OntologyParser ontologyParser = new OntologyParser(PATH);
         ontologyParser.parseOntology();
         indirectClasses = ontologyParser.getIndirectClasses();
         indirectClassesWithIDs = ontologyParser.getIndirectClassesIDs();
         listHierarchy = ontologyParser.getListHierarchy(); 
 
-        File namesFile = new File(path + "/classes/mappings/names"); 
-        
+        File namesFile = new File(PATH + "/classes/mappings/names");        
         OccurrencesParser nameOccurrencesParser = new OccurrencesParser();
         nameOccurrencesParser.parseNamesFile(namesFile);
         namesList = nameOccurrencesParser.getNamesList();
         
         String osmInputPath;
         if (osmFile.startsWith("/") || osmFile.startsWith("file:///")){  //system has already exited in case of a null osmFile
-
-             osmInputPath = osmFile;
+            osmInputPath = osmFile;
         }
         else{
-
-            osmInputPath = path + "/"+ osmFile; 
+            osmInputPath = PATH + "/"+ osmFile; 
         }
         
         OSMParser osmParser = null; 
@@ -285,8 +359,9 @@ public class OSMRec {
         osmParser.parseDocument(); 
         nodeList = osmParser.getNodeList();
         wayList = osmParser.getWayList();
-        relationList = osmParser.getRelationList();
         instancesSize = wayList.size();
+        relationList = osmParser.getRelationList();
+        
         if(instancesSize ==0){
             System.out.println("Something went wrong.. Please check the path of input osm file");
             System.exit(0);
@@ -296,226 +371,138 @@ public class OSMRec {
         }       
         
         kClusters = instancesSize/averageInstancesPerCluster; //number of clusters, 
-                                                              //based on average instances per cluster provided by the user       
-        
-        InstanceVectors instanceVectors = new InstanceVectors(wayList, relationList, mappings, mappingsWithIDs, 
-                indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, path);
-        
-        instanceVectors.constructWayVectors();                  
-        
-       
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        
-///////////          Execution flow based on the provided arguments          //////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////        
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                
-        
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
-//////////////////////////////////      Train Algorithm 1      /////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
-        if(confParameter == null && trainMode && trainAlgorithm == 1){ 
-            chooseOptimalConfParameter(model, testSvmOutputFile, isLinux); //if conf parameter is not set, find best conf param            
-        }
-        else{ 
-            //-train 1: training the model using SVM multiclass
-            if(trainMode && trainAlgorithm == 1){
-                
-                String makePath;
-                if(isLinux){
-                    makePath = path.replace("/target", "");
-                }
-                else{
-                    makePath = path.replace("\\target","");    
-                }
-                
-                TrainSVM trainSVM = new TrainSVM();
-                trainSVM.executeTrain(makePath, confParameter, model, isLinux);
-            }
-
-            //-test 1: testing the input osm file, using the model produced from the training process.
-            if(testMode && trainAlgorithm == 1){
-                
-                String makePath;
-                if(isLinux){
-                makePath = path.replace("/target", "");
-                }
-                else{
-                makePath = path.replace("\\target","");    
-                }
-                
-                TestSVM testSVM = new TestSVM(makePath, model, testSvmOutputFile);
-                testSVM.executeTest(isLinux);
-                
-                //this file contains the vectors produced from the test set
-                File vectorsOutputFile = new File(path + "/classes/output/vectors");
-                
-                //this file contains the predictions from svm classify
-                File svmPredictionsOutputFile = new File(path + "/classes/output/" + testSvmOutputFile); 
-                
-                SVMRecommender recommender = new SVMRecommender();
-                recommender.recommend(recommendationsFileSVM, svmPredictionsOutputFile, vectorsOutputFile, 
-                                                                                    mappingsWithIDs, wayList, path);
-            }
-        }       
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////        Train Algorithm 2      /////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
-        if(averageInstancesPerCluster == -1 && trainMode && trainAlgorithm == 2){
-            chooseOptimalNumberOfClusters(isLinux);
-        }
-        else {           
-        
-            //-train -2: produces a vector matrix for the vcluster process
-            if(trainMode && trainAlgorithm == 2){
-                String vectorMatrixOutputFile = path + "/classes/output/vmatrix";
-
-                BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(wayList, 
-                                                                                vectorMatrixOutputFile, COLUMN_SIZE);
-                balancedVectorsMatrix.generateBalancedVectorsMatrix();  
-
-                String makePath;
-                if(isLinux){
-                makePath = path.replace("/target", "");
-                }
-                else{
-                makePath = path.replace("\\target","");    
-                }
-                
-                VClustering vCluster = new VClustering();
-                vCluster.executeClusteringProcess(makePath, kClusters, isLinux);
-
-                //train average cluster vectors and save them to a file. 
-                //This file will be used to classify new osm instances in a cluster
-                String clusterSolution = path + "/classes/output/vmatrix.mat.clustering." + kClusters;
-
-                ClusterVectors clusterVectors = new ClusterVectors(wayList, clusterSolution);
-                clusterVectors.produceClusterVectors();
-
-                //serialize average cluster vectors to file.
-                try (FileOutputStream fileOut = new FileOutputStream(path + "/classes/mappings/averageClusterVectors.ser");                         
-                    ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-                    ArrayList<Cluster> averageVectors = clusterVectors.getAverageClusterVectors();   
-                    out.writeObject(averageVectors);
-                }
-                catch(IOException e){
-                    System.out.println("serialize " + e);
-                }
-            }
-
-            if(testMode && trainAlgorithm == 2){
-
-                ArrayList<Cluster> trainedAverageVectors = null;
-                
-                //obtain serialized average cluster vectors from file.
-                try{   
-                    try (FileInputStream fileIn = new FileInputStream(path + "/classes/mappings/averageClusterVectors.ser"); 
-                        ObjectInputStream in = new ObjectInputStream(fileIn)) {
-                        trainedAverageVectors = (ArrayList<Cluster>) in.readObject();
-                    }
-                }
-                catch(IOException | ClassNotFoundException e){//
-                    System.err.println("Something went wrong.. Try to train a model first and then "
-                            + "test it with the same average instances per cluster!\n\n" +e);
-                }
-
-                ClusteringRecommender clusterRecommender = new ClusteringRecommender(wayList, trainedAverageVectors, 
-                                                                mappingsWithIDs, path, recommendationsFileClustering);
-                clusterRecommender.recommendClasses();
-            }   
-        }//end of else with no -k param 
-        
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////        Train Algorithm 3      /////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-        
-        if(trainMode && trainAlgorithm == 3){
-
-            TrainInstanceVectors trainInstanceVectors = new TrainInstanceVectors(wayList, mappings, mappingsWithIDs, 
-                                    indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, path);
-            
-            trainInstanceVectors.trainVectors();
-            //serialize average cluster vectors to file.
-            try (FileOutputStream fileOut = new FileOutputStream(path + "/classes/mappings/instanceVectors.ser"); 
-                ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-                out.writeObject(wayList);
-            }
-            catch(IOException e){
-                System.out.println("serialize " + e);
-            }
-        }
-        
-        if(testMode && trainAlgorithm == 3){
-                //ArrayList<ArrayList> trainedVectors = null;
-                ArrayList<OSMWay> trainedList = null;
-                //obtain serialized average cluster vectors from file.
-                try{   
-                    try (FileInputStream fileIn = new FileInputStream(path + "/classes/mappings/instanceVectors.ser"); 
-                        ObjectInputStream in = new ObjectInputStream(fileIn)) {
-                        trainedList = (ArrayList<OSMWay>) in.readObject();
-                    }
-                }
-                catch(IOException | ClassNotFoundException e){//
-                    System.out.println("deserialize failure\n" + e);
-                    System.err.println("Something went wrong.. Try to train a model first and then "
-                            + "test it with the test set instances!");
-                }
-                KNN knn = new KNN(wayList, mappingsWithIDs, trainedList);
-                knn.recommendClasses();              
-        }              
+                                                              //based on average instances per cluster provided by the user    
     }
-   
-    private static void chooseOptimalConfParameter(String model, String testSvmOutputFile, boolean isLinux){
-         // custom values for choosing optimal c parameter
-        Double[] confParams = new Double[] {5.0, 30.0, 1000.0, 40000.0, 100000.0, 200000.0};
+
+    private static void constructVectors() {
+        //if no c spedified && and train ==1 construct different vector files
+        if(!(confParameter == null && trainMode && trainAlgorithm == 1)){
+            InstanceVectors instanceVectors = new InstanceVectors(wayList, relationList, mappings, mappingsWithIDs, 
+                indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH + "/classes/output/vectors");
+        
+            instanceVectors.constructWayVectors();
+        }
+    }
+
+    private static void chooseOptimalConfParameter(){
+        //custom values for choosing optimal c parameter
+        Double[] confParams = new Double[] {1.0, 3.0, 5.0, 10.0, 20.0, 30.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 5000.0, 10000.0, 40000.0, 100000.0, 120000.0, 150000.0, 200000.0};
         String bestModel = model;
         String makePath;
         int i =0;
         float bestScore = 100;        
-        double bestConfParam = 5.0;              
+        double bestConfParam = 5.0;   //the first of the chosen values 
+        
+        int trainSize = 3*instancesSize/5;
+        int testSize = instancesSize/5;
+
+        List<OSMWay> trainList= new ArrayList<>();
+        for(int g = 0; g<trainSize; g++){ 
+            //if(g==3*testSize){g=4*testSize;}
+            trainList.add(wayList.get(g));
+        }
+        List<OSMWay> testList= new ArrayList<>();
+        for(int g = 3*testSize; g<4*testSize; g++){
+            testList.add(wayList.get(g));
+        }
+
+        InstanceVectors instanceVectorsTrain = new InstanceVectors(trainList, relationList, mappings, mappingsWithIDs, 
+            indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH + "/classes/output/vectorsTrain");
+
+        instanceVectorsTrain.constructWayVectors();
+
+        InstanceVectors instanceVectorsTest = new InstanceVectors(testList, relationList, mappings, mappingsWithIDs, 
+            indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH + "/classes/output/vectorsTest", true);
+
+        instanceVectorsTest.constructWayVectors();
         
         if(isLinux){
-            makePath = path.replace("/target", "");
+            makePath = PATH.replace("/target", "");
         }
         else{
-            makePath = path.replace("\\target","");    
+            makePath = PATH.replace("\\target","");    
         }
         
         for (Double confParam : confParams) {
-                                  
-            TrainSVM trainSVM = new TrainSVM();
-            trainSVM.executeTrain(makePath, confParam, model+i, isLinux);
+            
+            System.out.println("\n-c = " + confParam);
+            TrainSVM trainSVM = new TrainSVM(makePath, PATH + "/classes/output/vectorsTrain", confParam, model+i, isLinux);
+            trainSVM.executeTrain();
 
-            TestSVM testSVM = new TestSVM(makePath, model+i, testSvmOutputFile);
-            testSVM.executeTest(isLinux);             
+            TestSVM testSVM = new TestSVM(makePath, PATH + "/classes/output/vectorsTest", model+i, TEST_SVM_OUTPUT, isLinux);
+            testSVM.executeTest();             
             
             float score = testSVM.getScore();
             if(score < bestScore){
                 bestScore = score;
                 bestModel = model+i;
                 bestConfParam = confParam;
-            }            
+            }
+            
+        PredictionsScorer ps1 = new PredictionsScorer();    
+        ps1.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 1);
+        
+        PredictionsScorer ps5 = new PredictionsScorer();    
+        ps5.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 5);
+        
+        PredictionsScorer ps10 = new PredictionsScorer();    
+        ps10.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 10);
         i++;    
         }             
         
-        TrainSVM trainSVM = new TrainSVM();
-        trainSVM.executeTrain(makePath, bestConfParam, bestModel, isLinux);  //final training with optimal c parameter
+        TrainSVM trainSVM = new TrainSVM(makePath, PATH + "/classes/output/vectorsTrain", bestConfParam, bestModel, isLinux);
+        trainSVM.executeTrain();  //final training with optimal c parameter
         
         System.out.println("Best model produced is the file \"" + bestModel +"\", with conf parameter \"-c " 
                                                                                         + bestConfParam + "\"");
         System.out.println("Define this parameter to use the best model for SVM test: \"-m " + bestModel + "\"");        
     }
     
-    private static void chooseOptimalNumberOfClusters(boolean isLinux){
+    private static void trainSVM() {     
+        //training the model using SVM multiclass
+        String makePath;
+        if(isLinux){
+            makePath = PATH.replace("/target", "");
+        }
+        else{
+            makePath = PATH.replace("\\target","");    
+        }
+        TrainSVM trainSVM = new TrainSVM(makePath, PATH + "/classes/output/vectors", confParameter, model, isLinux);
+        trainSVM.executeTrain();
+    }
+    
+    private static void testSVM(){
+        //testing the input osm file, using the model produced from the training process.
+        String makePath;
+        if(isLinux){
+        makePath = PATH.replace("/target", "");
+        }
+        else{
+        makePath = PATH.replace("\\target","");    
+        }
+
+        TestSVM testSVM = new TestSVM(makePath, PATH + "/classes/output/vectors", model, TEST_SVM_OUTPUT, isLinux);
+        testSVM.executeTest();
+
+        //this file contains the vectors produced from the test set
+        File vectorsOutputFile = new File(PATH + "/classes/output/vectors");
+
+        //this file contains the predictions from svm classify
+        File svmPredictionsOutputFile = new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT); 
+
+        SVMRecommender recommender = new SVMRecommender();
+        recommender.recommend(recommendationsFileSVM, svmPredictionsOutputFile, vectorsOutputFile, 
+                                                                            mappingsWithIDs, wayList, PATH);
+    }
+    
+    private static void chooseOptimalNumberOfClusters(){
 
         float bestScore = 100; //worst possible score, because score represents classification error
         int optimalClusters = 70;
         Integer[] averageInstances = new Integer[] {70, 65, 60, 55, 50, 45, 40, 35, 30, 25};
         
-        int trainSize = 3*wayList.size()/5;
-        int testSize = wayList.size()/5;
+        int trainSize = 3*instancesSize/5; //trainSet is 3/5 of the instances
+        int testSize = instancesSize/5;   //testSet is the 1/5 of the instances, one for test and one for validate set.
         
         List<OSMWay> trainList= new ArrayList<>();
         for(int g = 0; g<trainSize; g++){                   
@@ -528,17 +515,17 @@ public class OSMRec {
         
         for(Integer k : averageInstances){       
             
-            String vectorMatrixOutputFile = path + "/classes/output/vmatrix";
+            String vectorMatrixOutputFile = PATH + "/classes/output/vmatrix";
             BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(trainList, 
                                                                                 vectorMatrixOutputFile, COLUMN_SIZE);
             balancedVectorsMatrix.generateBalancedVectorsMatrix();  
 
             String makePath;
             if(isLinux){
-                makePath = path.replace("/target", "");
+                makePath = PATH.replace("/target", "");
             }
             else{
-                makePath = path.replace("\\target","");    
+                makePath = PATH.replace("\\target","");    
             }             
 
             VClustering vCluster = new VClustering();
@@ -546,7 +533,7 @@ public class OSMRec {
 
             //train average cluster vectors and save them to a file. 
             //This file will be used to classify new osm instances in a cluster
-            String clusterSolution = path + "/classes/output/vmatrix.mat.clustering." + (trainSize/k);
+            String clusterSolution = PATH + "/classes/output/vmatrix.mat.clustering." + (trainSize/k);
 
             ClusterVectors clusterVectors = new ClusterVectors(trainList, clusterSolution);
             clusterVectors.produceClusterVectors();
@@ -563,7 +550,7 @@ public class OSMRec {
             }
 
             //serialize average vectors with the best k parameter
-            try (FileOutputStream fileOut = new FileOutputStream(path + "/classes/mappings/averageClusterVectors.ser"); 
+            try (FileOutputStream fileOut = new FileOutputStream(PATH + "/classes/mappings/averageClusterVectors.ser"); 
                 ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
                 out.writeObject(trainedAverageVectors);
 
@@ -574,28 +561,109 @@ public class OSMRec {
         }
     System.out.println("Best value for average instances per cluster is " + optimalClusters);
     System.out.println("Try to test defining -k " + optimalClusters);
+    }    
+
+    private static void trainClustering() {
+        //produces a matrix for the vcluster process       
+        String vectorMatrixOutputFile = PATH + "/classes/output/vmatrix";
+        BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(wayList, 
+                                                                        vectorMatrixOutputFile, COLUMN_SIZE);
+        balancedVectorsMatrix.generateBalancedVectorsMatrix();  
+
+        String makePath;
+        if(isLinux){
+        makePath = PATH.replace("/target", "");
+        }
+        else{
+        makePath = PATH.replace("\\target","");    
+        }
+
+        VClustering vCluster = new VClustering();
+        vCluster.executeClusteringProcess(makePath, kClusters, isLinux);
+
+        //train average cluster vectors and save them to a file. 
+        //This file will be used to classify new osm instances in a cluster
+        String clusterSolution = PATH + "/classes/output/vmatrix.mat.clustering." + kClusters;
+
+        ClusterVectors clusterVectors = new ClusterVectors(wayList, clusterSolution);
+        clusterVectors.produceClusterVectors();
+
+        //serialize average cluster vectors to file.
+        try (FileOutputStream fileOut = new FileOutputStream(PATH + "/classes/mappings/averageClusterVectors.ser");                         
+            ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+            ArrayList<Cluster> averageVectors = clusterVectors.getAverageClusterVectors();   
+            out.writeObject(averageVectors);
+        }
+        catch(IOException e){
+            System.out.println("serialize " + e);
+        }
     }
     
-    //////////////////////       for sclustering, takes too long to execute for large training files   /////////////////       
- 
-        /*        
-        //-train 2, -train 3: producing the similarities adjacency matrix and executes clustering process with CLUTO 
-        //if(trainMode && (trainAlgorithm == 2 || trainAlgorithm == 3)){
-        if(false){    
-            AdjacencyMatrix adjMatrix = new AdjacencyMatrix(wayList, wayList.size(),path);
-            try {
-                adjMatrix.constructMatrix();
-            } catch (IOException ex) {
-                Logger.getLogger(OSMRec.class.getName()).log(Level.SEVERE, null, ex);
-            } 
-            String makePath = path.replace("/target", "");
-            SClustering clustering = new SClustering();            
-            clustering.executeClusteringProcess(makePath, kClusters);
-       
-        //produces the average cluster vectors from the computed clusters and train a new SVM on them or KNN on new instances
-        //the produced vectors reside in the output directory.    
-            String clusterSolution = path + "/classes/output/matrix.graph.clustering." + kClusters;
-            ClusterVectors clusterVectors = new ClusterVectors(wayList, clusterSolution);
-            clusterVectors.produceClusterVectors();
-        }*/
+    private static void testClustering() {       
+        ArrayList<Cluster> trainedAverageVectors = null;
+
+        //obtain serialized average cluster vectors from file.
+        try{   
+            try (FileInputStream fileIn = new FileInputStream(PATH + "/classes/mappings/averageClusterVectors.ser"); 
+                ObjectInputStream in = new ObjectInputStream(fileIn)) {
+                trainedAverageVectors = (ArrayList<Cluster>) in.readObject();
+            }
+        }
+        catch(IOException | ClassNotFoundException e){//
+            System.err.println("Something went wrong.. Try to train a model first and then "
+                    + "test it with the same average instances per cluster!\n\n" +e);
+        }
+        ClusteringRecommender clusterRecommender = new ClusteringRecommender(wayList, trainedAverageVectors, 
+                                                        mappingsWithIDs, PATH, recommendationsFileClustering);
+        clusterRecommender.recommendClasses();
+    }
+
+    private static void trainKNN() {
+        
+        TrainInstanceVectors trainInstanceVectors = new TrainInstanceVectors(wayList, mappings, mappingsWithIDs, 
+                                indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH);
+
+        trainInstanceVectors.trainVectors();
+        //serialize average cluster vectors to file.
+        try (FileOutputStream fileOut = new FileOutputStream(PATH + "/classes/mappings/instanceVectors.ser"); 
+            ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+            out.writeObject(wayList);
+        }
+        catch(IOException e){
+            System.out.println("serialize " + e);
+        }
+    }
+
+    private static void testKNN() {
+        ArrayList<OSMWay> trainedList = null;
+        //obtain serialized average cluster vectors from file.
+        try{   
+            try (FileInputStream fileIn = new FileInputStream(PATH + "/classes/mappings/instanceVectors.ser"); 
+                ObjectInputStream in = new ObjectInputStream(fileIn)) {
+                trainedList = (ArrayList<OSMWay>) in.readObject();
+            }
+        }
+        catch(IOException | ClassNotFoundException e){//
+            System.out.println("deserialize failure\n" + e);
+            System.err.println("Something went wrong.. Try to train a model first and then "
+                    + "test it with the test set instances!");
+        }
+        KNN knn = new KNN(wayList, mappingsWithIDs, trainedList);
+        knn.recommendClasses(); 
+    }
+    
+    //for dev
+    private static void evaluateKNN(){
+        int trainSize = 3*instancesSize/5; //trainSet is 3/5 of the instances
+        int testSize = instancesSize/5;   //testSet is the 1/5 of the instances, one for test and one for validate set.
+        
+        List<OSMWay> trainList= new ArrayList<>();
+        for(int g = 0; g<trainSize; g++){                   
+            trainList.add(wayList.get(g));
+        }
+        List<OSMWay> testList= new ArrayList<>();
+        for(int g = 4*testSize; g<5*testSize; g++){
+            testList.add(wayList.get(g));
+        }
+    }
 }
