@@ -489,10 +489,6 @@ private void createGeometryFeatures(OSMWay wayNode) {
             wayNode.getIndexVector().put(id, 1.0);
         }
     }
-    
-    public List<List<Integer>> getNodeVectors(){
-        return nodeVectorsList;
-    }
 
     public List<TreeMap<Integer, Double>> getNodeIndexVectors(){
         return nodeIndexVectorsList;
