@@ -102,8 +102,7 @@ public class KNN {
             Collections.sort(Arrays.asList(totalEuclidianSimilarities), Collections.reverseOrder());
             Collections.sort(Arrays.asList(totalCosineSimilarities), Collections.reverseOrder());
 
-            Set<Integer> actualClassList = node.getClassIDs();
-            actualClassList.add(node.getClassID());          
+            Set<Integer> actualClassList = node.getClassIDs();          
 
             //cosine             
             Set<Integer> totalClassesFromTrain = new HashSet();
@@ -165,8 +164,8 @@ public class KNN {
             
             instances++;
         }
-    System.out.println("cosine:    scores/Listsize" + (double)scoresCos/(double)(instances-unclassifiedInstances));  
-    System.out.println("euclidian: scores/Listsize" + (double)scoresEu/(double)(instances-unclassifiedInstances)); 
+    System.out.println("cosine similarity:    " + (double)scoresCos/(double)(instances-unclassifiedInstances));  
+    System.out.println("euclidian distance: " + (double)scoresEu/(double)(instances-unclassifiedInstances)); 
     System.out.println("total instances: " + instances + " unclassified: " + unclassifiedInstances);
     System.out.println("cosine    correct instances: " + scoresCos);
     System.out.println("euclidian correct instances: " + scoresEu);
