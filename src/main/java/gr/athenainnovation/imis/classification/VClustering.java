@@ -29,7 +29,7 @@ public class VClustering {
             }   
             
             clusteringCommand = path + "/src/main/resources/vcluster " 
-            + "-clmethod=rb -sim=cos -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." 
+            + "-clmethod=rb -sim=cos -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." 
             + clusters + " " 
             + path + "/target/classes/output/vmatrix.mat "
             + clusters; //number of desired clusters based on the average instance per cluster. 
@@ -43,7 +43,7 @@ public class VClustering {
             }  
             
             clusteringCommand = path + "/src/main/resources/vcluster.exe " 
-            + "-clmethod=rb -sim=cos -mincomponent=1 -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." 
+            + "-clmethod=rb -sim=cos -clustfile="+ path +"/target/classes/output/vmatrix.mat.clustering." 
             + clusters + " " 
             + path + "/target/classes/output/vmatrix.mat "
             + clusters; //number of desired clusters based on the average instance per cluster.
