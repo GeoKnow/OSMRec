@@ -12,7 +12,7 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 
 /**
- * Provides functionality for executing the SVM test.
+ * Provides functionality for executing the SVM test process.
  * 
  * @author imis-nkarag
  */
@@ -22,16 +22,20 @@ public class TestSVM {
     private float score;
     private final String model;
     private final String path;
+    private final String vectorsPath;
     private final String output;
+    private final boolean isLinux;
     
-    public TestSVM(String path, String model, String output){
+    public TestSVM(String path, String vectorsPath, String model, String output, boolean isLinux){
         score = 100;
         this.path = path;
+        this.vectorsPath = vectorsPath;
         this.model = model;
         this.output = output;
+        this.isLinux = isLinux;
     }
     
-    public void executeTest(boolean isLinux){      
+    public void executeTest(){      
         
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         PrintStream printStream = new PrintStream(byteArray);
@@ -46,7 +50,7 @@ public class TestSVM {
                 isExecutable = new File(path + "/src/main/resources/svm_multiclass_classify").setExecutable(true,false);
             }
             classificationLine = path + "/src/main/resources/svm_multiclass_classify "
-            + path + "/target/classes/output/vectors "
+            + vectorsPath + " "
             + path + "/target/classes/output/" + model + " " 
             + path + "/target/classes/output/"+ output;     
         }
@@ -58,11 +62,10 @@ public class TestSVM {
                 isExecutable = new File(path + "/src/main/resources/svm_multiclass_classify.exe").setExecutable(true,false);
             }
             classificationLine = path + "/src/main/resources/svm_multiclass_classify.exe "
-            + path + "/target/classes/output/vectors "
+            + vectorsPath + " "
             + path + "/target/classes/output/" + model + " " 
             + path + "/target/classes/output/"+ output;
-        }     
-        
+        }            
         System.setOut(printStream);           
         
         CommandLine commandLineClassification = CommandLine.parse(classificationLine);
@@ -94,14 +97,12 @@ public class TestSVM {
             }
             Logger.getLogger(OSMRec.class.getName()).log(Level.SEVERE, null, ex);      
         }
-        catch(NumberFormatException e){
-            
+        catch(NumberFormatException e){           
             String[] scoreContainer = svmTestOutput.split("\\n");
             int index = scoreContainer[5].indexOf("%");
             String scoreString = scoreContainer[5].substring(index-4, index);
             score = Float.parseFloat(scoreString);
-            setScore(score);
-            
+            setScore(score);          
         }       
     }
     
@@ -111,6 +112,5 @@ public class TestSVM {
     
     public float getScore(){
         return score;
-    }
-    
+    }   
 }
