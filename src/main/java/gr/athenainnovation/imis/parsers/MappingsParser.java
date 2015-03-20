@@ -35,8 +35,8 @@ public class MappingsParser {
              String nextLine = input.nextLine();
              String[] splitContent = nextLine.split("\\|",2);   //split current line in two parts, 
                                                                 //separated by the "|" symbol
-             String key = splitContent[0];                      //got the key which will be mapped at a class  
-             String value = splitContent[1];                    //the value which is the mapped class
+             String key = splitContent[0];                      //this key will be mapped to a class  
+             String value = splitContent[1];                    //this value is the mapped class
              key = key.trim();                                  
              value = value.trim();                              
              mappings.put(key, value);
@@ -47,8 +47,8 @@ public class MappingsParser {
     } 
     
     private void constructMappingsWithIDs(){
-        Integer i = 1;
-        for (String ontologyClass : mappings.values()){             
+        Integer i = 1; //starting ID is 1: SVM multiclass does not accept 0 as a class ID
+        for (String ontologyClass : mappings.values()){  
             mappingsWithIDs.put(ontologyClass, i);           
             i++;
         }       
