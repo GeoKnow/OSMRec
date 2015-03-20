@@ -58,9 +58,10 @@ public class OSMRec{// extends Plugin{
     private static final String OS = System.getProperty("os.name").toLowerCase();
     private static final String PATH = Paths.get("").toAbsolutePath().toString();
     private static final String TEST_SVM_OUTPUT = "testSVM";
-    private static final int COLUMN_SIZE = 3750; //vector features
+    //private static final int COLUMN_SIZE = 3750; //vector features, mean var double values
+    private static final int COLUMN_SIZE = 3811; //vector features, mean var boolean intervals
     private static int kClusters = 1;
-    private static int averageInstancesPerCluster = -1; //default: no k parameter specified
+    private static Integer averageInstancesPerCluster = null; //default: no k parameter specified
     private static int trainAlgorithm = 0;
     private static int instancesSize = 0;
     private static boolean trainMode = false;
@@ -80,7 +81,8 @@ public class OSMRec{// extends Plugin{
     private static List<OSMWay> wayList;
     private static List<OSMRelation> relationList;
     private static List<OntClass> listHierarchy;
-    private static List<String> namesList;     
+    private static List<String> namesList;   
+    private static boolean validation = true;
     
 //    public OSMRec(PluginInformation info){
 //        super(info);
@@ -92,9 +94,8 @@ public class OSMRec{// extends Plugin{
         defineOS(); //check OS type
         parseArguments(args);       
         clearFiles(); //clear files from previous execution if exist
-        parseFiles(); //parse ontology, tags-to-class mappings, textual info, osm file       
-        constructVectors(); //construct vectors for the instances of the osm input file
-         
+        parseFiles(); //parse ontology, tags-to-class mappings, textual info, osm file                    
+        //constructVectors(); //construct vectors for the instances of the osm input file
         
     //////////////////      Algorithm 1      //////////////////      
         if(confParameter == null && trainMode && trainAlgorithm == 1){ 
@@ -131,7 +132,7 @@ public class OSMRec{// extends Plugin{
         }       
 
     /////////////////       Algorithm 2      /////////////////
-        if(averageInstancesPerCluster == -1 && trainMode && trainAlgorithm == 2){
+        if(averageInstancesPerCluster == null && trainMode && trainAlgorithm == 2){
             chooseOptimalNumberOfClusters();
         }
         else {  
@@ -145,12 +146,14 @@ public class OSMRec{// extends Plugin{
         
     /////////////////       Algorithm 3      /////////////////  
         if(trainMode && trainAlgorithm == 3){
-            trainKNN();
+            //trainKNN();
+            evaluateKNN(); //for evaluation
         }
         
         if(testMode && trainAlgorithm == 3){
             testKNN();            
-        }              
+        }   
+        
     }
     
     private static void defineOS() {
@@ -262,11 +265,13 @@ public class OSMRec{// extends Plugin{
 	       else if(arg.equals("-k")){
 		   if (i < args.length){
 		       try{
-                        averageInstancesPerCluster = Integer.parseInt(value);
+                            averageInstancesPerCluster = Integer.parseInt(value);
+                            //kClusters = instancesSize/averageInstancesPerCluster;//number of clusters, 
+                                            //based on average instances per cluster provided by the user
 		       }
 		       catch(NumberFormatException e){
-			 System.out.println("-k requires the desired average number of items per cluster: [-k averageSize]");  
-                         wrongArguments = true;
+                            System.out.println("-k requires the desired average number of items per cluster: [-k averageSize]");  
+                            wrongArguments = true;
 		       }
 		   }
 		   else{
@@ -360,6 +365,9 @@ public class OSMRec{// extends Plugin{
         nodeList = osmParser.getNodeList();
         wayList = osmParser.getWayList();
         instancesSize = wayList.size();
+        if(averageInstancesPerCluster!=null){
+            kClusters = instancesSize/averageInstancesPerCluster;
+        }
         relationList = osmParser.getRelationList();
         
         if(instancesSize ==0){
@@ -369,14 +377,13 @@ public class OSMRec{// extends Plugin{
         else{
             System.out.println("The input file has " + instancesSize + " nodes.");
         }       
-        
-        kClusters = instancesSize/averageInstancesPerCluster; //number of clusters, 
-                                                              //based on average instances per cluster provided by the user    
+          
     }
 
     private static void constructVectors() {
         //if no c spedified && and train ==1 construct different vector files
-        if(!(confParameter == null && trainMode && trainAlgorithm == 1)){
+        if(!(trainMode && confParameter == null && averageInstancesPerCluster == null && (trainAlgorithm == 1 || trainAlgorithm == 2))){
+
             InstanceVectors instanceVectors = new InstanceVectors(wayList, relationList, mappings, mappingsWithIDs, 
                 indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH + "/classes/output/vectors");
         
@@ -385,24 +392,38 @@ public class OSMRec{// extends Plugin{
     }
 
     private static void chooseOptimalConfParameter(){
+        int a;
+        int b;
+        
+        if (validation){
+            System.out.println("\n\n\nEvaluating VALIDATION set!\n" );
+            a = 2;
+            b = 3;
+        }
+        else{
+            System.out.println("\n\n\nEvaluating TEST set!\n" );
+            a = 3;
+            b = 4;
+        }
         //custom values for choosing optimal c parameter
-        Double[] confParams = new Double[] {1.0, 3.0, 5.0, 10.0, 20.0, 30.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 5000.0, 10000.0, 40000.0, 100000.0, 120000.0, 150000.0, 200000.0};
+        Double[] confParams = new Double[] {1.0, 5.0, 10.0, 20.0, 30.0, 50.0, 100.0, 150.0, 
+            200.0, 300.0, 400.0, 500.0, 1000.0, 1500.0, 5000.0, 10000.0, 40000.0, 60000.0, 100000.0, 120000.0, 150000.0,170000.0, 200000.0};
+        //Double[] confParams = new Double[] {60000.0, 170000.0};
         String bestModel = model;
         String makePath;
-        int i =0;
+        int i = 0;
         float bestScore = 100;        
-        double bestConfParam = 5.0;   //the first of the chosen values 
+        double bestConfParam = 1.0;   //the first of the chosen values 
         
-        int trainSize = 3*instancesSize/5;
         int testSize = instancesSize/5;
 
         List<OSMWay> trainList= new ArrayList<>();
-        for(int g = 0; g<trainSize; g++){ 
-            //if(g==3*testSize){g=4*testSize;}
+        for(int g = 0; g<5*testSize; g++){ 
+            if(g == 2*testSize){g=4*testSize;}
             trainList.add(wayList.get(g));
         }
         List<OSMWay> testList= new ArrayList<>();
-        for(int g = 3*testSize; g<4*testSize; g++){
+        for(int g = a*testSize; g<b*testSize; g++){
             testList.add(wayList.get(g));
         }
 
@@ -439,23 +460,31 @@ public class OSMRec{// extends Plugin{
                 bestConfParam = confParam;
             }
             
-        PredictionsScorer ps1 = new PredictionsScorer();    
-        ps1.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 1);
-        
-        PredictionsScorer ps5 = new PredictionsScorer();    
-        ps5.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 5);
-        
-        PredictionsScorer ps10 = new PredictionsScorer();    
-        ps10.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 10);
-        i++;    
+            PredictionsScorer ps1 = new PredictionsScorer();    
+            ps1.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 1);
+            
+            if(!validation){
+                PredictionsScorer ps5 = new PredictionsScorer();    
+                ps5.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 5);
+
+                PredictionsScorer ps10 = new PredictionsScorer();    
+                ps10.computeScore(new File(PATH + "/classes/output/" + TEST_SVM_OUTPUT), new File(PATH + "/classes/output/vectorsTest"), 10);
+
+            }
+            i++;
         }             
         
-        TrainSVM trainSVM = new TrainSVM(makePath, PATH + "/classes/output/vectorsTrain", bestConfParam, bestModel, isLinux);
-        trainSVM.executeTrain();  //final training with optimal c parameter
+        //TrainSVM trainSVM = new TrainSVM(makePath, PATH + "/classes/output/vectorsTrain", bestConfParam, bestModel, isLinux);
+        //trainSVM.executeTrain();  //final training with optimal c parameter
         
         System.out.println("Best model produced is the file \"" + bestModel +"\", with conf parameter \"-c " 
                                                                                         + bestConfParam + "\"");
-        System.out.println("Define this parameter to use the best model for SVM test: \"-m " + bestModel + "\"");        
+        System.out.println("Define this parameter to use the best model for SVM test: \"-m " + bestModel + "\"");       
+       
+        if(validation == true){
+            validation = false;
+            chooseOptimalConfParameter(); //call again to evaluate test set for all score categories
+        }
     }
     
     private static void trainSVM() {     
@@ -496,22 +525,46 @@ public class OSMRec{// extends Plugin{
     }
     
     private static void chooseOptimalNumberOfClusters(){
-
-        float bestScore = 100; //worst possible score, because score represents classification error
-        int optimalClusters = 70;
-        Integer[] averageInstances = new Integer[] {70, 65, 60, 55, 50, 45, 40, 35, 30, 25};
+        int a;
+        int b;
         
+        if (validation){
+            System.out.println("\n\n\nEvaluating VALIDATION set!\n" );
+            a = 2;
+            b = 3;           
+        }
+        else{
+            System.out.println("\n\n\nEvaluating TEST set!\n" );
+            a = 3;
+            b = 4;
+        }
+        float bestScore = 100; //worst possible score, because score represents classification error
+        //int optimalClusters = 70;
+        int bestK = 75;
+        Integer[] averageInstances = new Integer[] {75,70,65,60,55,50,45,40,35,30,25,20,15};
+        //Integer[] averageInstances = new Integer[] {45,40,35,30,25,20,15};
         int trainSize = 3*instancesSize/5; //trainSet is 3/5 of the instances
         int testSize = instancesSize/5;   //testSet is the 1/5 of the instances, one for test and one for validate set.
         
         List<OSMWay> trainList= new ArrayList<>();
-        for(int g = 0; g<trainSize; g++){                   
+        for(int g = 0; g<5*testSize; g++){  
+            if(g==2*testSize){g=4*testSize;}
             trainList.add(wayList.get(g));
         }
         List<OSMWay> testList= new ArrayList<>();
-        for(int g = 4*testSize; g<5*testSize; g++){
-            testList.add(wayList.get(g));
+        for(int g = a*testSize; g<b*testSize; g++){
+            testList.add(wayList.get(g)); //construct without class and relation feats
         }
+        
+        InstanceVectors instanceVectorsTrain = new InstanceVectors(trainList, relationList, mappings, mappingsWithIDs, 
+            indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH + "/classes/output/vectorsTrain");
+
+        instanceVectorsTrain.constructWayVectors();
+
+        InstanceVectors instanceVectorsTest = new InstanceVectors(testList, relationList, mappings, mappingsWithIDs, 
+            indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH + "/classes/output/vectorsTest", true);
+
+        instanceVectorsTest.constructWayVectors();
         
         for(Integer k : averageInstances){       
             
@@ -519,7 +572,6 @@ public class OSMRec{// extends Plugin{
             BalancedVectorsMatrix balancedVectorsMatrix = new BalancedVectorsMatrix(trainList, 
                                                                                 vectorMatrixOutputFile, COLUMN_SIZE);
             balancedVectorsMatrix.generateBalancedVectorsMatrix();  
-
             String makePath;
             if(isLinux){
                 makePath = PATH.replace("/target", "");
@@ -539,28 +591,44 @@ public class OSMRec{// extends Plugin{
             clusterVectors.produceClusterVectors();
 
             //avoiding serialization here by getting average vectors directly from the produced clusterVectors
-            ArrayList<Cluster> trainedAverageVectors = clusterVectors.getAverageClusterVectors();  
-            ClusteringScorer cs = new ClusteringScorer(testList, trainedAverageVectors, mappingsWithIDs);    
-            cs.score();
+            //ArrayList<Cluster> trainedAverageVectors = clusterVectors.getAverageClusterVectors(); 
+            ArrayList<Cluster> trainedAverageVectors = clusterVectors.getIndexAverageClusterVectors();
+            ClusteringScorer cs1 = new ClusteringScorer(testList, trainedAverageVectors, mappingsWithIDs, 1);    
+            cs1.score();
+            
+            if(!validation){
+                ClusteringScorer cs5 = new ClusteringScorer(testList, trainedAverageVectors, mappingsWithIDs, 5);    
+                cs5.score();
 
-            float score = cs.getScore();               
+                ClusteringScorer cs10 = new ClusteringScorer(testList, trainedAverageVectors, mappingsWithIDs, 10);    
+                cs10.score();
+            }
+            
+            float score = cs1.getScore();               
             if(score < bestScore){ //score represents the classification error
                 bestScore = score;
-                optimalClusters = (trainSize/k);
+                //optimalClusters = (trainSize/k);
+                bestK = k;
             }
 
             //serialize average vectors with the best k parameter
-            try (FileOutputStream fileOut = new FileOutputStream(PATH + "/classes/mappings/averageClusterVectors.ser"); 
-                ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-                out.writeObject(trainedAverageVectors);
-
-            }
-            catch(IOException e){
-                System.out.println("serialize error:\n " + e);
-            }
+            //commented out for evaluation
+//            try (FileOutputStream fileOut = new FileOutputStream(PATH + "/classes/mappings/averageClusterVectors.ser"); 
+//                ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+//                out.writeObject(trainedAverageVectors);
+//
+//            }
+//            catch(IOException e){
+//                System.out.println("serialize error:\n " + e);
+//            }
         }
-    System.out.println("Best value for average instances per cluster is " + optimalClusters);
-    System.out.println("Try to test defining -k " + optimalClusters);
+        System.out.println("Best value for average instances per cluster is " + bestK);
+        System.out.println("Try to test defining -k " + bestK);
+        
+        if(validation == true){
+            validation = false;
+            chooseOptimalNumberOfClusters(); //call again to evaluate test set for all score categories
+        }
     }    
 
     private static void trainClustering() {
@@ -591,7 +659,7 @@ public class OSMRec{// extends Plugin{
         //serialize average cluster vectors to file.
         try (FileOutputStream fileOut = new FileOutputStream(PATH + "/classes/mappings/averageClusterVectors.ser");                         
             ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-            ArrayList<Cluster> averageVectors = clusterVectors.getAverageClusterVectors();   
+            ArrayList<Cluster> averageVectors = clusterVectors.getIndexAverageClusterVectors();   
             out.writeObject(averageVectors);
         }
         catch(IOException e){
@@ -620,7 +688,7 @@ public class OSMRec{// extends Plugin{
 
     private static void trainKNN() {
         
-        TrainInstanceVectors trainInstanceVectors = new TrainInstanceVectors(wayList, mappings, mappingsWithIDs, 
+        TrainInstanceVectors trainInstanceVectors = new TrainInstanceVectors(wayList, relationList, mappings, mappingsWithIDs, 
                                 indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH);
 
         trainInstanceVectors.trainVectors();
@@ -648,22 +716,64 @@ public class OSMRec{// extends Plugin{
             System.err.println("Something went wrong.. Try to train a model first and then "
                     + "test it with the test set instances!");
         }
-        KNN knn = new KNN(wayList, mappingsWithIDs, trainedList);
+        KNN knn = new KNN(wayList, mappingsWithIDs, trainedList, 1);
         knn.recommendClasses(); 
     }
     
     //for dev
     private static void evaluateKNN(){
-        int trainSize = 3*instancesSize/5; //trainSet is 3/5 of the instances
+        int a;
+        int b;
+        
+        if (validation){
+            System.out.println("\n\n\nEvaluating VALIDATION set!\n" );
+            a = 2;
+            b = 3;
+        }
+        else{
+            System.out.println("\n\n\nEvaluating TEST set!\n" );
+            a = 3;
+            b = 4;
+        }
+        //int trainSize = 3*instancesSize/5; //trainSet is 3/5 of the instances
         int testSize = instancesSize/5;   //testSet is the 1/5 of the instances, one for test and one for validate set.
         
         List<OSMWay> trainList= new ArrayList<>();
-        for(int g = 0; g<trainSize; g++){                   
+        for(int g = 0; g<5*testSize; g++){  // 0~~1~~2~~3~~4~~5
+            if(g == 2*testSize){g=4*testSize;}
             trainList.add(wayList.get(g));
         }
         List<OSMWay> testList= new ArrayList<>();
-        for(int g = 4*testSize; g<5*testSize; g++){
+        for(int g = a*testSize; g<b*testSize; g++){
             testList.add(wayList.get(g));
         }
+        
+        //train
+        TrainInstanceVectors trainInstanceVectors = new TrainInstanceVectors(trainList, relationList, mappings, mappingsWithIDs, 
+                                indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH);
+
+        trainInstanceVectors.trainVectors();
+        //avoiding serialization
+
+        InstanceVectors instanceVectorsTest = new InstanceVectors(testList, relationList, mappings, mappingsWithIDs, 
+            indirectClasses, indirectClassesWithIDs, listHierarchy, nodeList, namesList, PATH + "/classes/output/vectorsTest", true);
+
+        instanceVectorsTest.constructWayVectors();
+        
+        KNN knn1 = new KNN(testList, mappingsWithIDs, trainList, 1);
+        knn1.recommendClasses();
+        
+        if(!validation){
+            KNN knn5 = new KNN(testList, mappingsWithIDs, trainList, 5);
+            knn5.recommendClasses();
+            KNN knn10 = new KNN(testList, mappingsWithIDs, trainList, 10);
+            knn10.recommendClasses();
+        }
+        
+        if(validation == true){
+            validation = false;
+            evaluateKNN(); //call again to evaluate test set for all score categories
+        }
+        
     }
 }
