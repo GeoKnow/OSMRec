@@ -1,4 +1,4 @@
-package gr.athenainnovation.imis.classmapper;
+package gr.athenainnovation.imis.OSMRec;
 
 import junit.framework.TestCase;
 
@@ -6,9 +6,9 @@ import junit.framework.TestCase;
  *
  * @author imis-nkarag
  */
-public class ClassMapperTest extends TestCase {
+public class OSMRecTest extends TestCase {
     
-    public ClassMapperTest(String testName) {
+    public OSMRecTest(String testName) {
         super(testName);
     }
     
@@ -28,9 +28,7 @@ public class ClassMapperTest extends TestCase {
     public void testMain() throws Exception {
         System.out.println("main");
         String[] args = null;
-        //ClassMapper.main(args);
-        // TODO review the generated test code and remove the default call to fail.
-        //fail("The test case is a prototype.");
+
     }
     
 }

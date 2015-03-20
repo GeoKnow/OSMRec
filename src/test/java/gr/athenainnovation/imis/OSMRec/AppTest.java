@@ -1,4 +1,4 @@
-package gr.athenainnovation.imis.classmapper;
+package gr.athenainnovation.imis.OSMRec;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
