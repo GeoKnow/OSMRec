@@ -43,7 +43,7 @@ public class OSMParser extends DefaultHandler {
     
     private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(OSMParser.class);
     
-//change from wgs84 to cartesian for later processing of the geometry
+    //change from wgs84 to cartesian for later processing of the geometry
     private static final CoordinateReferenceSystem sourceCRS = DefaultGeographicCRS.WGS84;
     private static final CoordinateReferenceSystem targetCRS = DefaultGeocentricCRS.CARTESIAN;
     private final GeometryFactory geometryFactory = new GeometryFactory();
