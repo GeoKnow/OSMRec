@@ -78,7 +78,7 @@ public class PredictionsScorer {
             float result = 100-((float)scores*100/(float)loops);
             System.out.print(". done.\n");
             System.out.println("score for " + numberOfClassesToScore + " classes\n\n");
-            System.out.println("number of instances: " + loops + " and score (error): " + result + " correct: " + correct );           
+            System.out.println("number of instances: " + loops + " and score (error): " + result + " correct: " + correct + "\n\n" );           
         } 
         catch (FileNotFoundException ex) {
             System.err.println("something went wrong constructing the vectors file.. check your input file parameter\n\n\n" + ex);
