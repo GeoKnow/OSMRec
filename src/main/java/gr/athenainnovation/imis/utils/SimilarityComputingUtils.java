@@ -1,10 +1,11 @@
 package gr.athenainnovation.imis.utils;
 
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.TreeMap;
 
 /**
- *
+ * Cosine Similarity and Euclidian Distance calculation.
+ * 
  * @author imis-nkarag
  */
 
@@ -15,7 +16,7 @@ public final class SimilarityComputingUtils {
     }
     
     public static double cosineSimilarity(TreeMap<Integer,Double> vectorA, TreeMap<Integer,Double> vectorB){
-    //computes cosine similarity for the two provided vectors given as Treemaps   
+    //calculates cosine similarity for the two provided vectors given as Treemaps   
         
         double dotProduct = 0.0;
         double normA = 0.0;
@@ -27,12 +28,15 @@ public final class SimilarityComputingUtils {
                 normA += vectorA.get(id)*vectorA.get(id);
                 normB += vectorB.get(id)*vectorB.get(id);
             }
+            else{
+                normA += vectorA.get(id)*vectorA.get(id);
+            }
         }
          
-        double cosineSim =  (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
-        return cosineSim;
+        return (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
     }
     
+    /*
     public static double cosineSimilarityArray(ArrayList<Integer> vectorA, ArrayList<Integer> vectorB){
     //computes cosine similarity for the two provided vectors given as ArrayLists
         double dotProduct = 0.0;
@@ -47,7 +51,8 @@ public final class SimilarityComputingUtils {
         double cosSim =  (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
         return cosSim;
     }
-
+    */
+    
     public static double euclidianDistance(TreeMap<Integer, Double> vectorA, TreeMap<Integer, Double> vectorB){       
         double sum = 0.0;
         
@@ -57,10 +62,15 @@ public final class SimilarityComputingUtils {
                 double b = vectorB.get(id);
                 sum = sum + (a-b)*(a-b);
             }
+            else{
+                double a = vectorA.get(id);
+                sum = sum + a*a; //b = 0 => (a-b)*(a-b) = a^2
+            }
         }
         return Math.sqrt(sum);
     }
     
+    /*
     public static double euclidianDistanceArray(ArrayList<Integer> vectorA, ArrayList<Integer> vectorB){       
         double sum = 0.0;
         for(int i=0;i<vectorA.size();i++) {
@@ -70,4 +80,5 @@ public final class SimilarityComputingUtils {
         }
         return Math.sqrt(sum);
     }    
+    */
 }
