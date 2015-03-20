@@ -4,7 +4,6 @@ package gr.athenainnovation.imis.OSMRec;
 import gr.athenainnovation.imis.OSMContainer.OSMWay;
 import gr.athenainnovation.imis.utils.SimilarityComputingUtils;
 import static java.lang.Math.abs;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,14 +23,18 @@ public class KNN {
     
     private final List<OSMWay> wayList;
     private final Map<String, Integer> mappingsWithIDs;
-    private final ArrayList<OSMWay> trainedList;
-    private int unclassifiedInstances;
+    private final List<OSMWay> trainedList;
+    private int unclassifiedInstances = 0;
+    private final int numberOfClassesToScore;
+    private int counter = 0;
     
-    public KNN(List<OSMWay> wayList, Map<String,Integer> mappingsWithIDs, ArrayList<OSMWay> trainedList) {
-       this.wayList = wayList;
-       this.trainedList = trainedList;
-       this.mappingsWithIDs = mappingsWithIDs; 
-       unclassifiedInstances = 0;
+    public KNN(List<OSMWay> wayList, Map<String,Integer> mappingsWithIDs, List<OSMWay> trainedList, int numberOfClassesToScore) {
+       
+        this.wayList = wayList;
+        this.trainedList = trainedList;
+        this.mappingsWithIDs = mappingsWithIDs; 
+        this.numberOfClassesToScore = numberOfClassesToScore;
+        
     }    
     
     public void recommendClasses(){
@@ -105,10 +108,10 @@ public class KNN {
             Set<Integer> actualClassList = node.getClassIDs();          
 
             //cosine             
-            Set<Integer> totalClassesFromTrain = new HashSet();
+            Set<Integer> totalClassesFromTrainCosine = new HashSet();
             Set<String> recommendedInstancesCosine = new HashSet();
             i = 0;
-            while(i<10){
+            while(i<numberOfClassesToScore){
             Set<Integer> classesFromTrainCos;    
                 for(Map.Entry<OSMWay, Double> similarity : mapSimilarities.entrySet()){ 
                     Double similarityValue = similarity.getValue();
@@ -118,7 +121,7 @@ public class KNN {
                         classesFromTrainCos = tempNode.getClassIDs();//classes from train instance
                         recommendedInstancesCosine.add(tempNode.getID());
                         //actualClassList
-                        totalClassesFromTrain.addAll(classesFromTrainCos);//add all trained instances classes to a set. check if this set contains the test inst class
+                        totalClassesFromTrainCosine.addAll(classesFromTrainCos);//add all trained instances classes to a set. check if this set contains the test inst class
                         break; //found best instance
                     }
                 }
@@ -128,7 +131,7 @@ public class KNN {
             i = 0;
             Set<Integer> totalClassesFromTrainEuclidian = new HashSet();
             Set<String> recommendedInstancesEuclidian = new HashSet();
-            while(i<10){
+            while(i<numberOfClassesToScore){
                 Set<Integer> classesFromTrainEu;
                 for(Map.Entry<OSMWay, Double> distance : mapDistances.entrySet()){
                     Double  distanceValue = distance.getValue();
@@ -146,30 +149,30 @@ public class KNN {
             i++;    
             }
             
+            if(actualClassList.isEmpty()){
+                unclassifiedInstances++;
+            }
+            
             for(Integer classID : actualClassList){
-                if(classID.equals(0)){
-                    unclassifiedInstances++;
-                } 
-                else{
-                    if(totalClassesFromTrainEuclidian.contains(classID)){
-                        correctInstanceEu = 1;
-                    }
-                    if(totalClassesFromTrain.contains(classID)){
-                        correctInstanceCos = 1;
-                    }
+                if(totalClassesFromTrainEuclidian.contains(classID)){
+                    correctInstanceEu = 1;
                 }
+                if(totalClassesFromTrainCosine.contains(classID)){
+                    correctInstanceCos = 1;
+                }               
             }
             scoresEu = scoresEu + correctInstanceEu;
             scoresCos = scoresCos + correctInstanceCos;
             
             instances++;
         }
-    System.out.println("cosine similarity:    " + (double)scoresCos/(double)(instances-unclassifiedInstances));  
-    System.out.println("euclidian distance: " + (double)scoresEu/(double)(instances-unclassifiedInstances)); 
-    System.out.println("total instances: " + instances + " unclassified: " + unclassifiedInstances);
-    System.out.println("cosine    correct instances: " + scoresCos);
-    System.out.println("euclidian correct instances: " + scoresEu);
-
+        
+        System.out.println("scoring " + numberOfClassesToScore + " classes.\n");    
+        System.out.println("cosine similarity:    " + (double)scoresCos/(double)(instances-unclassifiedInstances));  
+        System.out.println("euclidian distance: " + (double)scoresEu/(double)(instances-unclassifiedInstances)); 
+        System.out.println("total instances: " + instances + " unclassified: " + unclassifiedInstances);
+        System.out.println("cosine    correct instances: " + scoresCos);
+        System.out.println("euclidian correct instances: " + scoresEu);
     }
     
     private double getMaxArea(double areaA, double areaB){
