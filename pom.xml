@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>gr.athenainnovation.imis</groupId>
-  <artifactId>OSMRec</artifactId>
-  <version>1.0</version>
+  <artifactId>OSMRec_MULTICLASS</artifactId>
+  <version>1.1</version>
   <packaging>jar</packaging>
 
-  <name>OSMRec</name>
+  <name>OSMRec_MULTICLASS</name>
   <url>http://maven.apache.org</url>
   
     <build>
