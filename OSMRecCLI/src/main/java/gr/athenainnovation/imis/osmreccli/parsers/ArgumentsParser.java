@@ -1,5 +1,5 @@
 
-package gr.athenainnovation.imis.osmrecliblinear.parsers;
+package gr.athenainnovation.imis.osmreccli.parsers;
 
 /**
  * Class that validates/keeps the CLI argument information.

@@ -1,4 +1,4 @@
-package gr.athenainnovation.imis.osmrecliblinear.parsers;
+package gr.athenainnovation.imis.osmreccli.parsers;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
@@ -7,9 +7,9 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMNode;
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMRelation;
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMWay;
+import gr.athenainnovation.imis.osmreccli.container.OSMNode;
+import gr.athenainnovation.imis.osmreccli.container.OSMRelation;
+import gr.athenainnovation.imis.osmreccli.container.OSMWay;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;

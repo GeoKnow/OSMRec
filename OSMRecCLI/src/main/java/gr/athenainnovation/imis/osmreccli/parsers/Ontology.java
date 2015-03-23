@@ -1,4 +1,4 @@
-package gr.athenainnovation.imis.osmrecliblinear.parsers;
+package gr.athenainnovation.imis.osmreccli.parsers;
 
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;

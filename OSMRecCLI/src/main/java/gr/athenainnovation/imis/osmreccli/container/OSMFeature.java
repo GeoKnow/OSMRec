@@ -1,5 +1,5 @@
 
-package gr.athenainnovation.imis.osmrecliblinear.container;
+package gr.athenainnovation.imis.osmreccli.container;
 
 import de.bwaldvogel.liblinear.FeatureNode;
 

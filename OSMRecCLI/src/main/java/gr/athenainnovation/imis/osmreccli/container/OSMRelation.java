@@ -1,4 +1,4 @@
-package gr.athenainnovation.imis.osmrecliblinear.container;
+package gr.athenainnovation.imis.osmreccli.container;
 
 import java.io.Serializable;
 import java.util.ArrayList;

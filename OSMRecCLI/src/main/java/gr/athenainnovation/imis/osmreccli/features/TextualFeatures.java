@@ -1,10 +1,10 @@
 
-package gr.athenainnovation.imis.osmrecliblinear.features;
+package gr.athenainnovation.imis.osmreccli.features;
 
 import com.cybozu.labs.langdetect.LangDetectException;
 import de.bwaldvogel.liblinear.FeatureNode;
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMWay;
-import gr.athenainnovation.imis.osmrecliblinear.statistics.LanguageDetector;
+import gr.athenainnovation.imis.osmreccli.container.OSMWay;
+import gr.athenainnovation.imis.osmreccli.extractor.LanguageDetector;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;

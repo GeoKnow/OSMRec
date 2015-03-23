@@ -1,9 +1,9 @@
 
-package gr.athenainnovation.imis.osmrecliblinear.features;
+package gr.athenainnovation.imis.osmreccli.features;
 
 import de.bwaldvogel.liblinear.FeatureNode;
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMRelation;
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMWay;
+import gr.athenainnovation.imis.osmreccli.container.OSMRelation;
+import gr.athenainnovation.imis.osmreccli.container.OSMWay;
 import java.util.List;
 import java.util.Map;
 

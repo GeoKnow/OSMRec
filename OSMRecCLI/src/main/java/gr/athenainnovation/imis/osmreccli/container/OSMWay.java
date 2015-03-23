@@ -1,5 +1,5 @@
 
-package gr.athenainnovation.imis.osmrecliblinear.container;
+package gr.athenainnovation.imis.osmreccli.container;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;

@@ -1,12 +1,12 @@
 
-package gr.athenainnovation.imis.osmrecliblinear.features;
+package gr.athenainnovation.imis.osmreccli.features;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import de.bwaldvogel.liblinear.FeatureNode;
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMWay;
+import gr.athenainnovation.imis.osmreccli.container.OSMWay;
 import java.util.ArrayList;
 import java.util.List;
 

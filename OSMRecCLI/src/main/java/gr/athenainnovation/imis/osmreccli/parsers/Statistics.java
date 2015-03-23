@@ -1,5 +1,5 @@
 
-package gr.athenainnovation.imis.osmrecliblinear.statistics;
+package gr.athenainnovation.imis.osmreccli.parsers;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,9 +16,9 @@ import java.util.logging.Logger;
  * @author imis-nkarag
  */
 
-public class TextualListLoader {
+public class Statistics {
     
-    private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(TextualListLoader.class);
+    private static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(Statistics.class);
     private List<String> namesList;
     
         public void parseNamesFile(File file){
@@ -30,7 +30,7 @@ public class TextualListLoader {
                 input = new Scanner(file);
             } 
             catch (FileNotFoundException ex) {
-                Logger.getLogger(TextualListLoader.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Statistics.class.getName()).log(Level.SEVERE, null, ex);
             }
             while(input.hasNext()) {
                 String nextLine = input.nextLine();

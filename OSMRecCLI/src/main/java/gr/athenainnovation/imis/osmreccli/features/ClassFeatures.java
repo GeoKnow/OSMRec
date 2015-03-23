@@ -1,23 +1,26 @@
-package gr.athenainnovation.imis.osmrecliblinear.features;
 
-import gr.athenainnovation.imis.osmrecliblinear.container.OSMWay;
+package gr.athenainnovation.imis.osmreccli.features;
+
+import de.bwaldvogel.liblinear.FeatureNode;
+import gr.athenainnovation.imis.osmreccli.container.OSMWay;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Defines the class/category of an OSM instance by its tags.
+ * Constructs the class feature nodes for liblinear.
  * 
  * @author imis-nkarag
  */
-public class OSMClassification {
+
+public class ClassFeatures {
     
     private int directClassID = 0;
     
-        public void calculateClasses(OSMWay wayNode, Map<String,String> mappings, Map<String, Integer> mappingsWithIDs, 
+        public void createClassFeatures(OSMWay wayNode, Map<String,String> mappings, Map<String, Integer> mappingsWithIDs, 
                 Map<String, List<String>> indirectClasses, Map<String, Integer> indirectClassesIDs) {
-            
+        
         Set<Integer> sortedIndirectIDs = new TreeSet<>();
         Set<Integer> sortedDirectIDs = new TreeSet<>();        
         for (Map.Entry<String, String> wayTagKeyValue : wayNode.getTagKeyValue().entrySet()){
@@ -64,6 +67,13 @@ public class OSMClassification {
             }            
         }   
         wayNode.setClassIDs(sortedDirectIDs);
+        for (Integer dirID : sortedDirectIDs){
+            wayNode.getFeatureNodeList().add(new FeatureNode(dirID, 1));           
+        }
+        for (Integer indID : sortedIndirectIDs){
+            wayNode.getFeatureNodeList().add(new FeatureNode(indID, 1));
+        } 
         wayNode.setClassID(directClassID);
+        //System.out.println("class: " + wayNode.getFeatureNodeList());
     } 
 }
