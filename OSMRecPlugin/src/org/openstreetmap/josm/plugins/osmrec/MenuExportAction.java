@@ -21,9 +21,9 @@ public class MenuExportAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent arg0) {
 
-        if( OSMRecPlugin.mapFrame !=null ){
+        if( OSMRecPlugin.getCurrentMapFrame() !=null ){
             OSMRecToggleDialog pro = new OSMRecToggleDialog();
-            OSMRecPlugin.mapFrame.addToggleDialog(pro);
-        }      
+            OSMRecPlugin.getCurrentMapFrame().addToggleDialog(pro);
+        }       
     }
 }
