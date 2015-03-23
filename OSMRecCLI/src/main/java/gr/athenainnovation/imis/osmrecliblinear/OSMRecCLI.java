@@ -70,7 +70,7 @@ public class OSMRecCLI {
     private static List<String> namesList;
     private static int instancesSize;
     private static String osmFilePath;
-    private static final boolean netbeans = true;
+    private static final boolean netbeans = false;
     private static double score1 = 0;
     private static double score5 = 0;
     private static double score10 = 0;
