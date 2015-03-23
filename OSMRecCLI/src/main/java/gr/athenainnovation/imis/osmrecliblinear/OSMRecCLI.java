@@ -51,7 +51,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * @author imis-nkarag
  */
 
-public class OSMRecLiblinear {
+public class OSMRecCLI {
     
     private static final String SEPARATOR = System.lineSeparator();
     private static final String OS = System.getProperty("os.name").toLowerCase();
@@ -618,7 +618,7 @@ public class OSMRecLiblinear {
         try {
             model = Model.load(modelFile);
         } catch (IOException ex) {
-            Logger.getLogger(OSMRecLiblinear.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
         }
         int modelLabelSize = model.getLabels().length;
         int[] labels = model.getLabels();
@@ -636,7 +636,7 @@ public class OSMRecLiblinear {
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(outputFilePath));
         } catch (IOException ex) {
-            Logger.getLogger(OSMRecLiblinear.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         for(OSMWay way : testList){
@@ -860,7 +860,7 @@ public class OSMRecLiblinear {
             osmParser = new OSMParser(osmFilePath);
             System.out.println("osm file parsed!");
         } catch (FactoryException ex) {
-            Logger.getLogger(OSMRecLiblinear.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         
@@ -922,11 +922,11 @@ public class OSMRecLiblinear {
                 System.out.println(entry.getKey());
             }
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(OSMRecLiblinear.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(OSMRecLiblinear.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(OSMRecLiblinear.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
         }       
     }
 
@@ -959,7 +959,7 @@ public class OSMRecLiblinear {
         try {
             textualFile.createNewFile();
         } catch (IOException ex) {
-            Logger.getLogger(OSMRecLiblinear.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
         }   
 
         List<Map.Entry<String, Integer>> textualList = anal.getFrequencies();
