@@ -15,7 +15,6 @@ import org.openstreetmap.josm.gui.dialogs.properties.PropertiesDialog;
 public class OSMRecPlugin extends Plugin{
     
     private final MenuExportAction menuExportAction;
-    public PropertiesDialog propertiesDialog2;
     private static MapFrame mapFrame;
     public OSMRecPlugin plugin;
     
