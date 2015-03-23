@@ -16,7 +16,7 @@ public class OSMRecPlugin extends Plugin{
     
     private final MenuExportAction menuExportAction;
     public PropertiesDialog propertiesDialog2;
-    public static MapFrame mapFrame;
+    private static MapFrame mapFrame;
     public OSMRecPlugin plugin;
     
     
@@ -45,7 +45,7 @@ public class OSMRecPlugin extends Plugin{
         OSMRecPlugin.mapFrame = newFrame;
     }
     
-    public MapFrame getCurrentMapFrame() {
+    public static MapFrame getCurrentMapFrame() {
         return mapFrame;
     }
     
