@@ -1,3 +1,4 @@
 /target/
 /src/test/java/
+/nbproject/private/
 .svn*
