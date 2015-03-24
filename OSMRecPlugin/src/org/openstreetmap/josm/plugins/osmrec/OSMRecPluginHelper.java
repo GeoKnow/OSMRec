@@ -158,6 +158,7 @@ class OSMRecPluginHelper {
     //private static final String MODEL_PATH = MAIN_PATH.substring(0, MAIN_PATH.lastIndexOf("/")) + "OSMRec_models/";
     private static String MODEL_PATH;
     private static String TEXTUAL_LIST_PATH;
+    private static String PROFILES_PATH;
 
     // Selection that we are editing by using both dialogs
     Collection<OsmPrimitive> sel;
@@ -200,9 +201,20 @@ class OSMRecPluginHelper {
         else{
             MAIN_PATH = System.getProperty("user.home");
         }
-        MODEL_PATH = new File(MAIN_PATH).getParentFile() + "/OSMRec_models";
-        TEXTUAL_LIST_PATH = MODEL_PATH + "/textualList.txt";
-        languageDetector = LanguageDetector.getInstance(MODEL_PATH + "/profiles");
+        
+        if(OSMRecPlugin.isLinux()){
+            MODEL_PATH = new File(MAIN_PATH).getParentFile() + "/OSMRec_models";
+            TEXTUAL_LIST_PATH = MODEL_PATH + "/textualList.txt";
+            PROFILES_PATH = MODEL_PATH + "/profiles";
+            
+        }
+        else {
+            MODEL_PATH = new File(MAIN_PATH).getParentFile() + "\\OSMRec_models";
+            TEXTUAL_LIST_PATH = MODEL_PATH + "\\textualList.txt";
+            PROFILES_PATH = MODEL_PATH + "\\profiles";
+        }
+        
+        languageDetector = LanguageDetector.getInstance(PROFILES_PATH);
     }
 
     /**
