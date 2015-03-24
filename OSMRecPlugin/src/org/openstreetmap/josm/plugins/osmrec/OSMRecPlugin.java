@@ -5,15 +5,18 @@ import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
-import org.openstreetmap.josm.gui.dialogs.properties.PropertiesDialog;
+
 
 /** 
+ * Plugin entry point class.
  * 
  * @author imis-nkarag
  */
 
 public class OSMRecPlugin extends Plugin{
     
+    private static final String OS = System.getProperty("os.name").toLowerCase();
+    private static boolean isLinux = false;
     private final MenuExportAction menuExportAction;
     private static MapFrame mapFrame;
     public OSMRecPlugin plugin;
@@ -21,6 +24,7 @@ public class OSMRecPlugin extends Plugin{
     
     public OSMRecPlugin(PluginInformation info) {       
         super(info);
+        defineOS();
         System.out.println(getPluginDir());
         menuExportAction = new MenuExportAction();
         Main.main.menu.toolsMenu.add(menuExportAction);
@@ -54,6 +58,19 @@ public class OSMRecPlugin extends Plugin{
     
     public OSMRecPlugin getState(){
         return plugin;
+    }
+    
+    private static void defineOS(){
+        if(OS.contains("nux")){
+            isLinux = true;
+        }
+        else if(OS.contains("win")){
+            isLinux = false;
+        }
+        else{            
+            System.out.println("OS not supported");
+            System.exit(0);
+        }
     }
     
 //    @Override
