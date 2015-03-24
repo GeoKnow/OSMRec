@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openstreetmap.josm.plugins.osmrec.OSMRecPlugin;
 
 /**
  * Detects language of osm textual information
@@ -26,7 +27,7 @@ public class LanguageDetector {
     }
     
     public static LanguageDetector getInstance(String languageProfilesPath){
-        System.out.println("language profile path: \n" + languageProfilesPath + "/el");
+        //System.out.println("language profile path: \n" + languageProfilesPath + "/el");
         if(languageDetector == null){
             languageDetector = new LanguageDetector();  
             loadProfilesFromStream(languageProfilesPath);
@@ -42,10 +43,23 @@ public class LanguageDetector {
         //languageProfilesInputStream.
 
         if(!new File(languageProfilesPath).exists()){
-            new File(languageProfilesPath).mkdir();
+            new File(languageProfilesPath).mkdirs();
         }
-        File languageProfilesOutputFile1 = new File(languageProfilesPath + "/el");
-        File languageProfilesOutputFile2 = new File(languageProfilesPath +"/en");
+        
+        File languageProfilesOutputFile1;
+        File languageProfilesOutputFile2;
+        //File languageProfilesOutputFile3;
+            
+        if(OSMRecPlugin.isLinux()){
+            languageProfilesOutputFile1 = new File(languageProfilesPath + "/el");
+            languageProfilesOutputFile2 = new File(languageProfilesPath +"/en");
+            //languageProfilesOutputFile3 = new File(languageProfilesPath +"/de");
+        }
+        else{
+            languageProfilesOutputFile1 = new File(languageProfilesPath + "\\el");
+            languageProfilesOutputFile2 = new File(languageProfilesPath +"\\en"); 
+            //languageProfilesOutputFile3 = new File(languageProfilesPath +"\\de");
+        }
         //languageProfilesOutputFile.mkdirs();
 
         FileOutputStream outputStream = null;
