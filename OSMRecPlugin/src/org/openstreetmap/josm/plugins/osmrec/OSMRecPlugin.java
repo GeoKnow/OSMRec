@@ -73,6 +73,10 @@ public class OSMRecPlugin extends Plugin{
         }
     }
     
+    public static boolean isLinux(){
+        return isLinux;
+    }
+    
 //    @Override
 //    public PreferenceSetting getPreferenceSetting() {
 //        return new PreferenceEditor();
