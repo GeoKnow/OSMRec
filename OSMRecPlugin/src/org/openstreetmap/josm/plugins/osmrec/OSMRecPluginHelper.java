@@ -129,7 +129,7 @@ import org.openstreetmap.josm.plugins.features.ClassFeatures;
 import org.openstreetmap.josm.plugins.features.GeometryFeatures;
 import org.openstreetmap.josm.plugins.features.OSMClassification;
 import org.openstreetmap.josm.plugins.features.TextualFeatures;
-import org.openstreetmap.josm.plugins.osmrec.personalization.UserDataExtractAndTrainWorker;
+import org.openstreetmap.josm.plugins.personalization.UserDataExtractAndTrainWorker;
 import org.openstreetmap.josm.plugins.parsers.Mapper;
 import org.openstreetmap.josm.plugins.parsers.OSMParser;
 import org.openstreetmap.josm.plugins.parsers.Ontology;
