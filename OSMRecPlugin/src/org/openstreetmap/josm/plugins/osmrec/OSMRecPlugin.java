@@ -6,7 +6,6 @@ import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.plugins.Plugin;
 import org.openstreetmap.josm.plugins.PluginInformation;
 
-
 /** 
  * Plugin entry point class.
  * 
@@ -20,8 +19,7 @@ public class OSMRecPlugin extends Plugin{
     private final MenuExportAction menuExportAction;
     private static MapFrame mapFrame;
     public OSMRecPlugin plugin;
-    
-    
+       
     public OSMRecPlugin(PluginInformation info) {       
         super(info);
         defineOS();

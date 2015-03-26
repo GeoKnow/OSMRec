@@ -1953,6 +1953,8 @@ class OSMRecPluginHelper {
                 modelSVM = Model.load(modelFile);
                 System.out.println("model loaded: " + modelFile.getAbsolutePath());
             } catch (IOException ex) {
+//                ValidatorDialog val = new ValidatorDialog();
+//                val.setVisible(true);
                 Logger.getLogger(TrainWorker.class.getName()).log(Level.SEVERE, null, ex);
             }
             modelSVMLabelSize = modelSVM.getLabels().length;
@@ -2118,16 +2120,30 @@ class OSMRecPluginHelper {
                     }                
 
                     Arrays.sort(scores);
-                    int predicted1 = modelSVMLabels[scoresValues.get(scores[scores.length-1])];  
-                    int predicted2 = modelSVMLabels[scoresValues.get(scores[scores.length-2])];
-                    int predicted3 = modelSVMLabels[scoresValues.get(scores[scores.length-3])];
-                    int predicted4 = modelSVMLabels[scoresValues.get(scores[scores.length-4])];  
-                    int predicted5 = modelSVMLabels[scoresValues.get(scores[scores.length-5])];
-                    int predicted6 = modelSVMLabels[scoresValues.get(scores[scores.length-6])];
-                    int predicted7 = modelSVMLabels[scoresValues.get(scores[scores.length-7])];  
-                    int predicted8 = modelSVMLabels[scoresValues.get(scores[scores.length-8])];
-                    int predicted9 = modelSVMLabels[scoresValues.get(scores[scores.length-9])];
-                    int predicted10 = modelSVMLabels[scoresValues.get(scores[scores.length-10])];                  
+                    int predicted1 = 0;  
+                    int predicted2 = 0;
+                    int predicted3 = 0;
+                    int predicted4 = 0; 
+                    int predicted5 = 0;
+                    int predicted6 = 0;
+                    int predicted7 = 0;  
+                    int predicted8 = 0;
+                    int predicted9 = 0;
+                    int predicted10 = 0; 
+                    
+                    if(scores.length>=10){
+                        
+                        predicted1 = modelSVMLabels[scoresValues.get(scores[scores.length-1])];  
+                        predicted2 = modelSVMLabels[scoresValues.get(scores[scores.length-2])];
+                        predicted3 = modelSVMLabels[scoresValues.get(scores[scores.length-3])];
+                        predicted4 = modelSVMLabels[scoresValues.get(scores[scores.length-4])];  
+                        predicted5 = modelSVMLabels[scoresValues.get(scores[scores.length-5])];
+                        predicted6 = modelSVMLabels[scoresValues.get(scores[scores.length-6])];
+                        predicted7 = modelSVMLabels[scoresValues.get(scores[scores.length-7])];  
+                        predicted8 = modelSVMLabels[scoresValues.get(scores[scores.length-8])];
+                        predicted9 = modelSVMLabels[scoresValues.get(scores[scores.length-9])];
+                        predicted10 = modelSVMLabels[scoresValues.get(scores[scores.length-10])];                  
+                    }
 
                     String[] predictedTags = new String[10];
                     for( Map.Entry<String, Integer> entry : mapperWithIDs.entrySet()){
