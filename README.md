@@ -1,6 +1,16 @@
 #OSMRecPlugin
 ___
 ##
+
+## Info 
+
+The purpose of the plugin is to recommend already existing categories/tags on newly created OSM entities.
+When a user creates a new object on the map, the plugin provides a list of the most relevant existing categories (expressed as tags). 
+The tags can be added automatically to the selected OSM entity.
+
+The classification process is carried out using Support Vector Machines by analysing spatial entities into training features. 
+The recommended tags are provided by the produced SVM model from the training process.
+
 ## Usage
 
 1. Copy and paste OSMRecPlugin.jar file in the plugins directory under the JOSM directory.
