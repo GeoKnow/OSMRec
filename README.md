@@ -11,6 +11,10 @@ The tags can be added automatically to the selected OSM entity.
 The classification process is carried out using Support Vector Machines by analysing spatial entities into training features. 
 The recommended tags are provided by the produced SVM model from the training process.
 
+OSMRec is implemented as a  [JOSM plugin] [JOSM plugin], thus allowing the real-time, accurate and consistent categorization of newly created spatial entities in OpenStreetMap, through JOSM interface.
+
+OSMRec plugin can be [downloaded] [plugins] and installed in JOSM following the [standard procedure].
+
 ## Usage
 
 1. Copy and paste OSMRecPlugin.jar file in the plugins directory under the JOSM directory.
@@ -80,3 +84,6 @@ The OSMRec software is provided as free software. It can be redistributed and/or
 of the GNU General Public License as published by the Free Software Foundation; either version 3.0 of the
 License, or (optionally) any later version.
 
+[JOSM plugin]:http://wiki.openstreetmap.org/wiki/JOSM/Plugins/OSMRec
+[plugins]:https://josm.openstreetmap.de/wiki/Plugins
+[standard procedure]:http://wiki.openstreetmap.org/wiki/JOSM/Plugins#Installation
