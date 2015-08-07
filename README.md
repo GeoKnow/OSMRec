@@ -40,6 +40,8 @@ configuration for the SVM model pops up. Here input:
  * You can train a model by the editing history of a specific user, by area or by history, providing the additional info. 
  * Click Accept and Train Model button to start the training process.
 
+Alternatively, you can use the already produced SVM models from the SVMModels folder. The folder contains models for several cities of the world. After you download the compressed file for your preferred city, simply extract the "OSMRec_models" folder in the same folder of the OSM file you are going to edit with JOSM. Now you are ready to get recommendations from OSMRec without having to train a model! 
+
 #### Recommending
 For the category recommendation process on newly inserted spatial entities, click the "Add Recommendation" button from the initial toggle box. 
 The system loads the appropriate recommendation SVM model  and a top-10 list of recommended categories appear.
