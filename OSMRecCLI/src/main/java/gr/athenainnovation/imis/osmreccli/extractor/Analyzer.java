@@ -38,10 +38,12 @@ public class Analyzer {
     private String language;
     private ArrayList<Entry<String, Integer>> frequencies;
     private final LanguageDetector languageDetector;
+    private final String stopWordsPath;
     
-    public Analyzer(String osmFilePath, LanguageDetector languageDetector){
+    public Analyzer(String osmFilePath, LanguageDetector languageDetector, String stopWordsPath){
         this.osmFilePath = osmFilePath;
         this.languageDetector = languageDetector;
+        this.stopWordsPath = stopWordsPath;
     }
     
     public void runAnalysis() {
@@ -161,7 +163,7 @@ public class Analyzer {
         //parse stopwordsList
         FileInputStream fstream = null;
         try {
-            fstream = new FileInputStream("/home/imis-nkarag/software/OSMRec_LIBLINEAR/OSMRecLIBLINEAR/src/main/resources/stopWords.txt");
+            fstream = new FileInputStream(stopWordsPath);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Analyzer.class.getName()).log(Level.SEVERE, null, ex);
         }
