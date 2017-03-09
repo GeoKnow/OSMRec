@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import de.bwaldvogel.liblinear.*;
 import gr.athenainnovation.imis.osmreccli.parsers.ArgumentsParser;
 import gr.athenainnovation.imis.osmreccli.features.GeometryFeatures;
-//import gr.athenainnovation.imis.osmrecliblinear.container.OSMNode;
 import gr.athenainnovation.imis.osmreccli.container.OSMRelation;
 import gr.athenainnovation.imis.osmreccli.container.OSMWay;
 import gr.athenainnovation.imis.osmreccli.features.ClassFeatures;
@@ -29,7 +28,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-//import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,13 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-//import org.apache.lucene.analysis.Analyzer;
-//import org.apache.lucene.analysis.el.GreekAnalyzer;
 import org.opengis.referencing.FactoryException;
 import org.apache.lucene.queryParser.ParseException;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-//import org.apache.lucene.*;
-//import org.tartarus.snowball.ext.GreekStemmer;
 
 /**
  * 
@@ -65,9 +59,9 @@ public class OSMRecCLI {
     private static HashMap<String, Integer> mapperWithIDs;
     private static Map<String, List<String>> indirectClasses;
     private static Map<String, Integer> indirectClassesWithIDs;
-    private static List<OntClass> listHierarchy;
+    //private static List<OntClass> listHierarchy;
     private static List<String> namesList;
-    private static int instancesSize;
+    //private static int instancesSize;
     private static String osmFilePath;
     private static final boolean netbeans = false;
     private static double score1 = 0;
@@ -77,7 +71,7 @@ public class OSMRecCLI {
     private static double foldScore5 = 0;
     private static double foldScore10 = 0;
     private static double bestScore = 0;
-    private static int totalVectors;
+    //private static int totalVectors;
     private static String modelFilePath;
     private static String outputFilePath;    
     private static LanguageDetector languageDetector;
@@ -121,6 +115,14 @@ public class OSMRecCLI {
             }
         }
 
+        if(netbeans){
+
+                languageDetector = LanguageDetector.getInstance(PATH +"/src/main/resources/profiles");
+
+        } else{
+                languageDetector = LanguageDetector.getInstance(PATH +"/classes/profiles");
+
+        }
         languageDetector = LanguageDetector.getInstance(PATH +"/src/main/resources/profiles");
         extractTextualList();
         parseFiles();
@@ -227,7 +229,7 @@ public class OSMRecCLI {
             //System.out.println("(train) after relations id="+id);
             //System.out.println("id 1532 -> " + relationFeatures.getLastID());
             
-            TextualFeatures textualFeatures = null;
+            TextualFeatures textualFeatures;
             if(USE_TEXTUAL_FEATURES){
                 textualFeatures = new TextualFeatures(id, namesList, languageDetector);
                 textualFeatures.createTextualFeatures(way);
@@ -245,14 +247,9 @@ public class OSMRecCLI {
                 //int lastIndex1 = 0;
                 for(FeatureNode featureNode : featureNodeList){
                     
-                    //if(featureNode.getIndex() > lastIndex1){ //just testing
-                        featureNodeArray[i] = featureNode;
-                        //System.out.println("i: " + i + " array:" + featureNodeArray[i]);
-                        i++;
-                    //} //just testing
-                    //else{
-                        //System.out.println("\n\n\n\nfound problem " + way.getFeatureNodeList());
-                    //}
+                    featureNodeArray[i] = featureNode;
+                    //System.out.println("i: " + i + " array:" + featureNodeArray[i]);
+                    i++;
                     //lastIndex1 = featureNode.getIndex();
                 }
                 
@@ -507,7 +504,7 @@ public class OSMRecCLI {
             //validate set
             System.out.println("\n\nValidation Set:\n");
             for(Double param : confParams){
-                totalVectors = 0;
+                //totalVectors = 0;
                 foldScore1 = 0;
                 foldScore5 = 0;
                 foldScore10 = 0;
@@ -552,7 +549,7 @@ public class OSMRecCLI {
         }
 
         //run/score test set with the best c parameter
-        totalVectors = 0;
+        //totalVectors = 0;
         foldScore1 = 0;
         foldScore5 = 0;
         foldScore10 = 0;
@@ -617,8 +614,12 @@ public class OSMRecCLI {
         try {
             model = Model.load(modelFile);
         } catch (IOException ex) {
+            
             Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("Problem loading the model file!");
+            System.exit(0);
         }
+        
         int modelLabelSize = model.getLabels().length;
         int[] labels = model.getLabels();
         Map<Integer, Integer> mapLabelsToIDs = new HashMap<>();
@@ -780,7 +781,7 @@ public class OSMRecCLI {
                     }
                 }
             }
-            System.out.println("predicted classes: " + Arrays.toString(predictedTags)); 
+            //System.out.println("predicted classes: " + Arrays.toString(predictedTags)); 
             try {
                 bufferedWriter.write(SEPARATOR +"OSM ID: " + way.getID() + ", predicted classes: " + SEPARATOR);
                 bufferedWriter.newLine();
@@ -835,7 +836,7 @@ public class OSMRecCLI {
         ontology.parseOntology();
         indirectClasses = ontology.getIndirectClasses();
         indirectClassesWithIDs = ontology.getIndirectClassesIDs();
-        listHierarchy = ontology.getListHierarchy(); 
+        //listHierarchy = ontology.getListHierarchy(); 
         
         String names;
         if(netbeans){
@@ -931,25 +932,31 @@ public class OSMRecCLI {
 
     private static void extractTextualList(){
         System.out.println("Running analysis..");
-        //provide top-K
-        //Keep the top-K most frequent terms
-        //Keep terms with frequency higher than N
-        //Use the remaining terms as training features
         
-        Analyzer anal = new Analyzer(osmFilePath, languageDetector);
-        anal.runAnalysis();
-        //System.out.println(anal.getFrequencies());
-        //System.out.println(anal.getTopKMostFrequent(15));
-        //System.out.println(anal.getWithFrequency(100));
         String textualListFilePath;
+        String stopWordsPath;
         if(netbeans){
+            stopWordsPath = PATH + "/src/main/resources/stopWords.txt";
             textualListFilePath = PATH + "/src/main/resources/textualList.txt";
             //System.out.println("using textual list path: " + PATH + "/src/main/resources/textualList.txt");
         }
         else{
             textualListFilePath = PATH + "/classes/textualList.txt";
+            stopWordsPath = PATH + "/classes/stopWords.txt";
             //System.out.println("using textual list path: " + PATH + "/classes/textualList.txt");
-        }        
+        } 
+        
+        //provide top-K
+        //Keep the top-K most frequent terms
+        //Keep terms with frequency higher than N
+        //Use the remaining terms as training features
+        
+        Analyzer anal = new Analyzer(osmFilePath, languageDetector, stopWordsPath);
+        anal.runAnalysis();
+        //System.out.println(anal.getFrequencies());
+        //System.out.println(anal.getTopKMostFrequent(15));
+        //System.out.println(anal.getWithFrequency(100));
+       
 
         File textualFile = new File(textualListFilePath); 
         if(textualFile.exists()){
