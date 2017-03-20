@@ -1,4 +1,6 @@
-#OSMRecPlugin
+The OSMRec repository is now under [SLIPO-EU](https://github.com/SLIPO-EU/OSMRec) project.
+
+# OSMRecPlugin
 ___
 ##
 
