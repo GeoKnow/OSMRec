@@ -12,9 +12,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.lucene.analysis.el.GreekAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
 
 
 /**
@@ -36,10 +35,10 @@ public class TextualFeatures {
         this.id = id;
         this.textualList = textualList;
         this.languageDetector = languageDetector;
-        GreekAnalyzer greekAnalyzer = new GreekAnalyzer(Version.LUCENE_36);
-        greekParser = new QueryParser(Version.LUCENE_36, "", greekAnalyzer);
-        EnglishAnalyzer englishAnalyzer = new EnglishAnalyzer(Version.LUCENE_36);
-        englishParser = new QueryParser(Version.LUCENE_36, "", englishAnalyzer);        
+        GreekAnalyzer greekAnalyzer = new GreekAnalyzer();
+        greekParser = new QueryParser("", greekAnalyzer);
+        EnglishAnalyzer englishAnalyzer = new EnglishAnalyzer();
+        englishParser = new QueryParser("", englishAnalyzer);        
     }
     
     public void createTextualFeatures(OSMWay wayNode) {        

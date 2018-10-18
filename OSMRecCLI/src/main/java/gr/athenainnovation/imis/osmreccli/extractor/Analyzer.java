@@ -20,9 +20,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.lucene.analysis.el.GreekAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
 
 /**
  * Analyzes textual information. Languager detection, stop words removal, stemming based on language.
@@ -121,8 +120,9 @@ public class Analyzer {
     }
     
     private ArrayList<Map.Entry<String, Integer>> stemGreek(ArrayList<Map.Entry<String, Integer>> normalizedList) {
-        org.apache.lucene.analysis.Analyzer greekAnalyzer = new GreekAnalyzer(Version.LUCENE_36);
-        QueryParser greekParser = new QueryParser(Version.LUCENE_36, "", greekAnalyzer);
+        org.apache.lucene.analysis.Analyzer greekAnalyzer = new GreekAnalyzer();
+
+        QueryParser greekParser = new QueryParser("", greekAnalyzer);
         ArrayList<Map.Entry<String, Integer>> stemmedList = new ArrayList<>();
         for(Map.Entry<String, Integer> entry : normalizedList){
             if(!entry.getKey().isEmpty()){
@@ -141,8 +141,8 @@ public class Analyzer {
     }
     
     private ArrayList<Map.Entry<String, Integer>> stemEnglish(ArrayList<Map.Entry<String, Integer>> normalizedList){
-        org.apache.lucene.analysis.Analyzer englishAnalyzer = new EnglishAnalyzer(Version.LUCENE_36);
-        QueryParser englishParser = new QueryParser(Version.LUCENE_36, "", englishAnalyzer);
+        org.apache.lucene.analysis.Analyzer englishAnalyzer = new EnglishAnalyzer();
+        QueryParser englishParser = new QueryParser("", englishAnalyzer);
         ArrayList<Map.Entry<String, Integer>> stemmedList = new ArrayList<>();
         for(Map.Entry<String, Integer> entry : normalizedList){
             if(!entry.getKey().isEmpty()){

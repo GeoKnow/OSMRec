@@ -1,7 +1,6 @@
 package gr.athenainnovation.imis.osmreccli;
 
 import com.cybozu.labs.langdetect.LangDetectException;
-import com.hp.hpl.jena.ontology.OntClass;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
@@ -36,7 +35,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.opengis.referencing.FactoryException;
-import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryparser.classic.ParseException;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -801,8 +800,11 @@ public class OSMRecCLI {
             }        
         }
         try {
-            bufferedWriter.flush();
-            bufferedWriter.close();
+            if(bufferedWriter != null){
+                bufferedWriter.flush();
+                bufferedWriter.close();
+            }
+
         }    
         catch(IOException ex){
             System.out.println("Something went wrong computing the recommendations.. "
@@ -861,9 +863,9 @@ public class OSMRecCLI {
             System.out.println("osm file parsed!");
         } catch (FactoryException ex) {
             Logger.getLogger(OSMRecCLI.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(0);
         }
-        
-        
+
         osmParser.parseDocument();
         
         relationList = osmParser.getRelationList();

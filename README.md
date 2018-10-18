@@ -64,7 +64,7 @@ ___
 ## Usage
 
 * Train a model: <br />
-`java -jar OSMRecCLI.jar -train –i inputFile [-c confParameter –m model]`
+`java -jar OSMRecCLI.jar -train -i inputFile [-c confParameter -m model]`
 
 *inputfile*: OSM file to be used as training set. <br />
 *confParameter*: SVM configuration parameter 
@@ -72,7 +72,7 @@ ___
 *model*: optional filename for the SVM model that will be produced. <br />
 
 * Get recommendations: <br />
-`java -jar OSMRecCLI.jar –test -i inputfile [–m model –o outputFile]`
+`java -jar OSMRecCLI.jar -test -i inputfile [-m model -o outputFile]`
 
 *inputfile*: OSM file to be used as test set. Recommendations will be predicted for every instance in this file. <br />
 *model*: optional filename for the SVM model to be used for recommending. <br />
